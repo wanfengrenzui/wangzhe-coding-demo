@@ -6,19 +6,34 @@ import {
   BookOpenText,
   Bot,
   CheckCircle2,
+  ChevronRight,
   ClipboardCheck,
   FileText,
   Gauge,
+  Layers3,
   Loader2,
   MessageSquareText,
   Play,
   RadioTower,
+  Search,
   ShieldCheck,
   Sparkles,
+  Target,
+  WandSparkles,
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
+
+type FeatureKey = "agent" | "content" | "knowledge" | "feedback" | "evaluation";
+
+type Feature = {
+  key: FeatureKey;
+  label: string;
+  short: string;
+  icon: LucideIcon;
+  status: string;
+};
 
 const defaultTask =
   "基于一段 KPL 团战素材生成短视频内容：8分30秒，中路抱团，射手绕后持续输出，开团位命中多人，团战打出0换4。请生成官方解说、主播口播、标题，并评估是否适合发布。";
@@ -66,6 +81,44 @@ const waitingSteps: AgentStep[] = [
   },
 ];
 
+const features: Feature[] = [
+  {
+    key: "agent",
+    label: "Agent 任务中心",
+    short: "自动完成内容闭环",
+    icon: Sparkles,
+    status: "主流程",
+  },
+  {
+    key: "content",
+    label: "赛事内容生成",
+    short: "解说稿 / 口播 / 标题",
+    icon: MessageSquareText,
+    status: "可演示",
+  },
+  {
+    key: "knowledge",
+    label: "英雄语料库",
+    short: "英雄机制与 KPL 表达",
+    icon: BookOpenText,
+    status: "待扩展",
+  },
+  {
+    key: "feedback",
+    label: "玩家反馈分析",
+    short: "聚类情绪与需求",
+    icon: BarChart3,
+    status: "待扩展",
+  },
+  {
+    key: "evaluation",
+    label: "模型效果评估",
+    short: "验收标准与风险",
+    icon: ClipboardCheck,
+    status: "可演示",
+  },
+];
+
 const statCards: Array<[string, string, string, LucideIcon]> = [
   ["本周素材", "128", "+18%", RadioTower],
   ["内容通过率", "86.4%", "+6.2%", ShieldCheck],
@@ -80,19 +133,31 @@ const knowledgeItems = [
   ["零换四节奏", "已审核", "短视频标题库"],
 ];
 
-const navItems: Array<[string, LucideIcon, boolean]> = [
-  ["Agent 任务中心", Sparkles, true],
-  ["赛事内容生成", MessageSquareText, false],
-  ["英雄语料库", BookOpenText, false],
-  ["反馈分析", BarChart3, false],
-  ["模型评估", ClipboardCheck, false],
+const feedbackClusters = [
+  ["解说更有画面感", "36%", "正向"],
+  ["英雄技能描述泛化", "24%", "风险"],
+  ["标题需要更像短视频", "21%", "机会"],
+  ["想要主播锐评风格", "19%", "机会"],
+];
+
+const evaluationRows = [
+  ["王者专业度", 88],
+  ["赛事沉浸感", 91],
+  ["事实准确性", 84],
+  ["传播适配度", 86],
 ];
 
 function statusClass(status: AgentStep["status"]) {
-  if (status === "completed") return "border-emerald-400/40 bg-emerald-400/10 text-emerald-200";
-  if (status === "running") return "border-cyan-400/40 bg-cyan-400/10 text-cyan-100";
-  if (status === "failed") return "border-rose-400/40 bg-rose-400/10 text-rose-100";
-  return "border-white/10 bg-white/[0.04] text-slate-400";
+  if (status === "completed") {
+    return "border-emerald-300/50 bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "running") {
+    return "border-sky-300/50 bg-sky-300/10 text-sky-100";
+  }
+  if (status === "failed") {
+    return "border-rose-300/50 bg-rose-300/10 text-rose-100";
+  }
+  return "border-white/10 bg-white/[0.035] text-slate-400";
 }
 
 function statusLabel(status: AgentStep["status"]) {
@@ -102,19 +167,65 @@ function statusLabel(status: AgentStep["status"]) {
   return "等待中";
 }
 
+function activeFeatureCopy(feature: FeatureKey, result: AgentRunResult | null) {
+  if (feature === "content") {
+    return {
+      eyebrow: "Content Studio",
+      title: "赛事内容生成",
+      body:
+        result?.artifacts.creatorScript ||
+        "选择团战素材后，生成官方解说、主播口播、短视频标题和赛后复盘摘要。",
+    };
+  }
+  if (feature === "knowledge") {
+    return {
+      eyebrow: "Knowledge Base",
+      title: "英雄语料库",
+      body: "维护英雄定位、技能机制、分路打法、KPL 高频表达和易错事实，作为 Agent 的业务知识源。",
+    };
+  }
+  if (feature === "feedback") {
+    return {
+      eyebrow: "User Research",
+      title: "玩家反馈分析",
+      body: "聚类玩家评论，提炼情绪倾向、高频痛点和下一轮模型优化方向。",
+    };
+  }
+  if (feature === "evaluation") {
+    return {
+      eyebrow: "Model QA",
+      title: "模型效果评估",
+      body:
+        result?.artifacts.reviewMemo ||
+        "按专业度、沉浸感、事实准确性、传播性做发布前验收，低置信度输出进入人工复核池。",
+    };
+  }
+  return {
+    eyebrow: "Controlled Agent Workflow",
+    title: "Agent 任务中心",
+    body:
+      result?.report.summary ||
+      "输入赛事素材，Agent 自动完成任务解析、语料检索、内容生成、质量评估和迭代备忘。",
+  };
+}
+
 export function AgentWorkspace() {
   const [task, setTask] = useState(defaultTask);
   const [steps, setSteps] = useState(waitingSteps);
   const [result, setResult] = useState<AgentRunResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
+  const [activeFeature, setActiveFeature] = useState<FeatureKey>("agent");
 
   const completedCount = useMemo(
     () => steps.filter((item) => item.status === "completed").length,
     [steps],
   );
 
+  const featureCopy = activeFeatureCopy(activeFeature, result);
+
   async function runAgent() {
+    setActiveFeature("agent");
     setIsRunning(true);
     setError("");
     setResult(null);
@@ -145,17 +256,19 @@ export function AgentWorkspace() {
             current.map((stepItem, stepIndex) => {
               if (stepIndex < index) return { ...stepItem, status: "completed" };
               if (stepIndex === index) return item;
-              if (stepIndex === index + 1) return { ...stepItem, status: "running" };
+              if (stepIndex === index + 1) {
+                return { ...stepItem, status: "running" };
+              }
               return stepItem;
             }),
           );
-        }, index * 460);
+        }, index * 420);
       });
 
       window.setTimeout(() => {
         setSteps(data.steps);
         setIsRunning(false);
-      }, data.steps.length * 460 + 200);
+      }, data.steps.length * 420 + 200);
     } catch (agentError) {
       setError(agentError instanceof Error ? agentError.message : "未知错误");
       setSteps((current) =>
@@ -168,238 +281,324 @@ export function AgentWorkspace() {
   }
 
   return (
-    <main className="min-h-screen bg-[#070b10] text-slate-100">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 border-r border-white/10 bg-[#0b1118] p-5 lg:block">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400 text-slate-950">
-              <Bot size={22} />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">KingAI Ops</p>
-              <h1 className="text-base font-semibold">峡谷 AI 内容工作台</h1>
-            </div>
-          </div>
-
-          <nav className="mt-8 space-y-1 text-sm">
-            {navItems.map(([label, Icon, active]) => (
-              <div
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 ${
-                  active
-                    ? "bg-white/10 text-white"
-                    : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                }`}
-                key={String(label)}
-              >
-                <Icon size={17} />
-                <span>{label}</span>
-              </div>
-            ))}
-          </nav>
-
-          <div className="mt-8 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-4">
-            <p className="text-xs text-emerald-200">当前演示链路</p>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              素材输入 → Agent 拆解 → 语料检索 → 内容生成 → 质量评估 → 迭代建议
-            </p>
-          </div>
-        </aside>
-
-        <section className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-white/10 bg-[#0b1118]/80 px-5 py-4 backdrop-blur md:px-8">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-emerald-300">
-                Controlled Agent Workflow
-              </p>
-              <h2 className="mt-1 text-xl font-semibold md:text-2xl">
-                王者荣耀 AI 内容生产与验收
-              </h2>
-            </div>
-            <div className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 md:flex">
-              <Activity size={16} className="text-emerald-300" />
-              wangzhe.asta.net.cn
-            </div>
-          </header>
-
-          <div className="grid gap-4 p-5 md:grid-cols-4 md:p-8">
-            {statCards.map(([label, value, delta, Icon]) => (
-              <div
-                key={String(label)}
-                className="rounded-lg border border-white/10 bg-white/[0.045] p-4"
-              >
-                <div className="flex items-center justify-between text-sm text-slate-400">
-                  <span>{String(label)}</span>
-                  <Icon size={17} className="text-emerald-300" />
+    <main className="min-h-screen overflow-auto bg-[#05070b] px-4 py-4 text-slate-100">
+      <div className="mx-auto flex min-h-[calc(100vh-32px)] items-center justify-center">
+        <section className="aspect-video w-[min(100%,1600px)] min-w-[1120px] overflow-hidden rounded-[18px] border border-white/12 bg-[#081019] shadow-2xl shadow-black/50">
+          <div className="grid h-full grid-cols-[230px_1fr]">
+            <aside className="flex min-h-0 flex-col border-r border-white/10 bg-[#0b121c] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-300 text-slate-950">
+                  <Bot size={22} />
                 </div>
-                <div className="mt-4 flex items-end justify-between">
-                  <strong className="text-2xl">{String(value)}</strong>
-                  <span className="text-sm text-emerald-300">{String(delta)}</span>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">
+                    KingAI Ops
+                  </p>
+                  <h1 className="text-sm font-semibold">峡谷 AI 内容工作台</h1>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="grid flex-1 gap-5 px-5 pb-8 md:px-8 xl:grid-cols-[1.1fr_1.35fr_0.9fr]">
-            <section className="rounded-lg border border-white/10 bg-[#0d141d] p-5">
-              <div className="flex items-center gap-2">
-                <FileText size={18} className="text-emerald-300" />
-                <h3 className="font-semibold">任务输入</h3>
+              <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>今日 Agent 任务</span>
+                  <Activity size={14} className="text-emerald-200" />
+                </div>
+                <div className="mt-3 flex items-end justify-between">
+                  <strong className="text-3xl">42</strong>
+                  <span className="text-xs text-emerald-200">+12.6%</span>
+                </div>
               </div>
-              <textarea
-                value={task}
-                onChange={(event) => setTask(event.target.value)}
-                className="mt-4 h-56 w-full resize-none rounded-lg border border-white/10 bg-black/30 p-4 text-sm leading-6 text-slate-100 outline-none transition focus:border-emerald-300/60"
-              />
-              <button
-                onClick={runAgent}
-                disabled={isRunning}
-                className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-400 px-4 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isRunning ? <Loader2 size={17} className="animate-spin" /> : <Play size={17} />}
-                {isRunning ? "Agent 执行中" : "运行内容策划 Agent"}
-              </button>
-              {error ? <p className="mt-3 text-sm text-rose-300">{error}</p> : null}
 
-              <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                <p className="text-sm font-medium">语料命中预览</p>
-                <div className="mt-3 space-y-3">
-                  {knowledgeItems.map(([name, status, tag]) => (
-                    <div className="flex items-center justify-between text-sm" key={name}>
-                      <div>
-                        <p className="text-slate-200">{name}</p>
-                        <p className="text-xs text-slate-500">{tag}</p>
-                      </div>
-                      <span className="rounded-md border border-white/10 px-2 py-1 text-xs text-slate-300">
-                        {status}
+              <nav className="mt-4 space-y-2">
+                {features.map((item) => {
+                  const Icon = item.icon;
+                  const active = activeFeature === item.key;
+
+                  return (
+                    <button
+                      className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                        active
+                          ? "border-emerald-300/40 bg-emerald-300/12 text-white"
+                          : "border-white/8 bg-white/[0.025] text-slate-400 hover:border-white/16 hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                      key={item.key}
+                      onClick={() => setActiveFeature(item.key)}
+                      type="button"
+                    >
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                          active ? "bg-emerald-300 text-slate-950" : "bg-white/8"
+                        }`}
+                      >
+                        <Icon size={16} />
                       </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">{item.label}</span>
+                        <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                          {item.short}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
 
-            <section className="rounded-lg border border-white/10 bg-[#0d141d] p-5">
-              <div className="flex items-center justify-between">
+              <div className="mt-auto rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+                <p className="text-xs font-medium text-sky-100">演示闭环</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  素材输入 → Agent 拆解 → 语料检索 → 内容生成 → 质量评估 → 迭代建议
+                </p>
+              </div>
+            </aside>
+
+            <div className="flex min-h-0 flex-col">
+              <header className="flex h-[74px] items-center justify-between border-b border-white/10 px-5">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-emerald-200">
+                    {featureCopy.eyebrow}
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold">{featureCopy.title}</h2>
+                </div>
                 <div className="flex items-center gap-2">
-                  <Sparkles size={18} className="text-emerald-300" />
-                  <h3 className="font-semibold">Agent 执行链路</h3>
+                  <div className="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-300">
+                    <Search size={14} />
+                    <span>搜索英雄 / 赛事 / 反馈</span>
+                  </div>
+                  <div className="flex h-9 items-center gap-2 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-3 text-xs text-emerald-100">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    <span>wangzhe.asta.net.cn</span>
+                  </div>
                 </div>
-                <span className="rounded-md bg-white/[0.06] px-2.5 py-1 text-xs text-slate-300">
-                  {completedCount}/5 steps
-                </span>
-              </div>
+              </header>
 
-              <div className="mt-5 space-y-3">
-                {steps.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`rounded-lg border p-4 transition ${statusClass(item.status)}`}
+              <div className="grid min-h-0 flex-1 grid-cols-[330px_1fr_330px] gap-4 p-4">
+                <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText size={17} className="text-emerald-200" />
+                      <h3 className="text-sm font-semibold">任务输入</h3>
+                    </div>
+                    <span className="rounded-md bg-white/[0.06] px-2 py-1 text-[11px] text-slate-400">
+                      KPL 素材
+                    </span>
+                  </div>
+
+                  <textarea
+                    value={task}
+                    onChange={(event) => setTask(event.target.value)}
+                    className="mt-3 h-[168px] w-full resize-none rounded-xl border border-white/10 bg-black/25 p-3 text-xs leading-5 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-300/60"
+                  />
+
+                  <button
+                    onClick={runAgent}
+                    disabled={isRunning}
+                    className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-70"
+                    type="button"
                   >
+                    {isRunning ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Play size={16} />
+                    )}
+                    {isRunning ? "Agent 执行中" : "运行内容策划 Agent"}
+                  </button>
+                  {error ? <p className="mt-2 text-xs text-rose-300">{error}</p> : null}
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {statCards.map(([label, value, delta, Icon]) => (
+                      <div
+                        className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                        key={label}
+                      >
+                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                          <span>{label}</span>
+                          <Icon size={13} className="text-emerald-200" />
+                        </div>
+                        <div className="mt-2 flex items-end justify-between">
+                          <strong className="text-lg">{value}</strong>
+                          <span className="text-[11px] text-emerald-200">{delta}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 min-h-0 flex-1 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-xs font-medium text-slate-200">功能入口说明</p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      左侧入口现在可以切换模块。主流程仍是 Agent，其他模块用于面试时解释完整产品边界。
+                    </p>
+                  </div>
+                </section>
+
+                <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Layers3 size={17} className="text-emerald-200" />
+                      <h3 className="text-sm font-semibold">Agent 执行链路</h3>
+                    </div>
+                    <span className="rounded-md bg-white/[0.06] px-2.5 py-1 text-xs text-slate-300">
+                      {completedCount}/5 steps
+                    </span>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.025] p-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-black/25 text-xs font-semibold">
-                          {item.status === "running" ? (
-                            <Loader2 size={15} className="animate-spin" />
-                          ) : item.status === "completed" ? (
-                            <CheckCircle2 size={15} />
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-100">{item.title}</p>
-                          <p className="mt-1 text-xs text-slate-400">Tool: {item.tool}</p>
-                        </div>
-                      </div>
-                      <span className="shrink-0 rounded-md bg-black/20 px-2 py-1 text-xs">
-                        {statusLabel(item.status)}
-                      </span>
-                    </div>
-                    <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
                       <div>
-                        <p className="text-xs text-slate-500">输入摘要</p>
-                        <p className="mt-1 line-clamp-3 text-slate-300">{item.input}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-emerald-200">
+                          {featureCopy.eyebrow}
+                        </p>
+                        <h4 className="mt-1 text-lg font-semibold">{featureCopy.title}</h4>
+                        <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-400">
+                          {featureCopy.body}
+                        </p>
                       </div>
-                      <div>
-                        <p className="text-xs text-slate-500">输出摘要</p>
-                        <p className="mt-1 line-clamp-4 text-slate-200">{item.output}</p>
+                      <div className="rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-emerald-100">
+                        <WandSparkles size={22} />
                       </div>
                     </div>
-                    {item.score ? (
-                      <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
-                        <span>质量分 {item.score}</span>
-                        <span>风险 {item.risk}</span>
-                      </div>
-                    ) : null}
                   </div>
-                ))}
-              </div>
-            </section>
 
-            <section className="rounded-lg border border-white/10 bg-[#0d141d] p-5">
-              <div className="flex items-center gap-2">
-                <ClipboardCheck size={18} className="text-emerald-300" />
-                <h3 className="font-semibold">输出验收</h3>
-              </div>
-
-              <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                <p className="text-xs text-slate-500">发布结论</p>
-                <p className="mt-2 text-2xl font-semibold text-emerald-300">
-                  {result?.report.publishable || "等待评估"}
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  {result?.report.summary ||
-                    "运行 Agent 后，这里会展示可发布版本、验收风险和模型迭代方向。"}
-                </p>
-              </div>
-
-              <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                <p className="text-sm font-medium">内容产物</p>
-                <div className="mt-3 space-y-3 text-sm text-slate-300">
-                  <div>
-                    <p className="text-xs text-slate-500">推荐版本</p>
-                    <p className="mt-1">{result?.report.recommendedVersion || "短视频口播版"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">标题候选</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {(result?.artifacts.titles || ["关键团战转折", "AI 生成后展示"]).map(
-                        (title) => (
-                          <span
-                            key={title}
-                            className="rounded-md border border-white/10 bg-black/20 px-2 py-1 text-xs"
-                          >
-                            {title}
+                  <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                    {steps.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className={`rounded-xl border p-3 transition ${statusClass(item.status)}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex gap-3">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/25 text-xs font-semibold">
+                              {item.status === "running" ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : item.status === "completed" ? (
+                                <CheckCircle2 size={14} />
+                              ) : (
+                                index + 1
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-slate-100">
+                                {item.title}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">
+                                Tool: {item.tool}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="shrink-0 rounded-md bg-black/20 px-2 py-1 text-[11px]">
+                            {statusLabel(item.status)}
                           </span>
+                        </div>
+                        <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
+                          <div>
+                            <p className="text-[11px] text-slate-500">输入摘要</p>
+                            <p className="mt-1 line-clamp-2 text-slate-300">{item.input}</p>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-slate-500">输出摘要</p>
+                            <p className="mt-1 line-clamp-2 text-slate-200">{item.output}</p>
+                          </div>
+                        </div>
+                        {item.score ? (
+                          <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-300">
+                            <span>质量分 {item.score}</span>
+                            <span>风险 {item.risk}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Target size={17} className="text-emerald-200" />
+                      <h3 className="text-sm font-semibold">模块产出</h3>
+                    </div>
+                    <span className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-slate-400">
+                      {features.find((item) => item.key === activeFeature)?.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-[11px] text-slate-500">发布结论</p>
+                    <p className="mt-2 text-2xl font-semibold text-emerald-200">
+                      {result?.report.publishable || "等待评估"}
+                    </p>
+                    <p className="mt-3 line-clamp-4 text-xs leading-5 text-slate-400">
+                      {result?.report.summary ||
+                        "运行 Agent 后，这里会展示可发布版本、验收风险和模型迭代方向。"}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {evaluationRows.map(([label, value]) => (
+                      <div
+                        className="rounded-xl border border-white/10 bg-white/[0.03] p-3"
+                        key={label}
+                      >
+                        <p className="text-[11px] text-slate-500">{label}</p>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="h-full rounded-full bg-emerald-300"
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                        <p className="mt-2 text-sm font-semibold">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-xs font-medium">标题候选</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(result?.artifacts.titles || [
+                        "关键团战转折",
+                        "AI 生成后展示",
+                        "KPL 级别压迫感",
+                      ]).map((title) => (
+                        <span
+                          key={title}
+                          className="rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[11px] text-slate-300"
+                        >
+                          {title}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-xs font-medium">语料与反馈</p>
+                    <div className="mt-3 grid gap-2">
+                      {(activeFeature === "feedback" ? feedbackClusters : knowledgeItems).map(
+                        ([name, status, tag]) => (
+                          <div
+                            className="flex items-center justify-between rounded-lg bg-black/18 px-3 py-2 text-xs"
+                            key={name}
+                          >
+                            <div>
+                              <p className="text-slate-200">{name}</p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">{tag}</p>
+                            </div>
+                            <span className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-slate-300">
+                              {status}
+                            </span>
+                          </div>
                         ),
                       )}
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-4">
-                <p className="text-sm font-medium">下一步动作</p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  {(result?.report.nextActions || [
-                    "等待 Agent 生成迭代建议",
-                    "补充人工验收标准",
-                    "沉淀可复用语料标签",
-                  ]).map((item) => (
-                    <li className="flex gap-2" key={item}>
-                      <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-300" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <button
+                    className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-slate-200 transition hover:bg-white/[0.08]"
+                    type="button"
+                  >
+                    查看迭代备忘
+                    <ChevronRight size={15} />
+                  </button>
+                </section>
               </div>
-
-              {result?.usedMock ? (
-                <p className="mt-4 rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
-                  当前未读取到 DEEPSEEK_API_KEY，线上会先展示 mock 链路。配置环境变量后即可接入 DeepSeek。
-                </p>
-              ) : null}
-            </section>
+            </div>
           </div>
         </section>
       </div>
