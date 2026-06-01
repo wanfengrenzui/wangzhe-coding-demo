@@ -200,6 +200,41 @@ const voiceAgentSteps = [
   ["安全审核", "过滤冒充真人、攻击性表达和不确定战术结论"],
 ];
 
+const voiceIntentRoutes = [
+  {
+    id: "build",
+    label: "出装建议",
+    sample: "我孙尚香现在 9 分钟两件套，对面兰陵王一直切我，下一件先破晓还是保命？",
+    route: "knowledge.build",
+    reply:
+      "先别急着补破晓。兰陵王一直盯你，这波先做名刀小件，团战站辅助身后，等他露头再一技能拉开反打。",
+  },
+  {
+    id: "position",
+    label: "站位提醒",
+    sample: "下一波龙团我应该站哪里？",
+    route: "match.position",
+    reply:
+      "你站中右草后半步，别先露头。等前排吃第一波控制，你再翻滚出来点前排，保留闪现防刺客二进场。",
+  },
+  {
+    id: "review",
+    label: "赛后复盘",
+    sample: "刚才那波我为什么被秒了？",
+    route: "review.death",
+    reply:
+      "你先交了一技能清线，兰陵王进场时没有位移窗口。下次先等敌方刺客露视野，再用强化普攻处理兵线。",
+  },
+  {
+    id: "program",
+    label: "节目切片",
+    sample: "把这波团战剪成一个可以发的视频。",
+    route: "content.clip",
+    reply:
+      "这波适合剪 15 秒：先给龙坑拉扯，再接孙尚香收割，标题可以用‘等一个翻滚，团战直接变天’。",
+  },
+];
+
 const feedbackPosts = [
   ["发育路玩家", "射手体验", "后期团战节奏太快，射手没视野很容易被秒，希望 AI 能提示站位风险。", "机会"],
   ["KPL 观赛党", "解说内容", "团战复盘如果能自动指出胜负手和技能链，会比单纯口播更有用。", "正向"],
@@ -936,30 +971,177 @@ function KnowledgeModule({
   );
 }
 
+function matchVoiceIntent(query: string) {
+  if (/出装|破晓|名刀|装备|保命/.test(query)) return voiceIntentRoutes[0];
+  if (/站位|龙团|团战|位置|视野/.test(query)) return voiceIntentRoutes[1];
+  if (/为什么|被秒|复盘|刚才|死亡/.test(query)) return voiceIntentRoutes[2];
+  if (/剪|视频|切片|发布|标题/.test(query)) return voiceIntentRoutes[3];
+  return voiceIntentRoutes[1];
+}
+
 function VoiceModule() {
+  const [query, setQuery] = useState(voiceIntentRoutes[0].sample);
+  const [intent, setIntent] = useState(voiceIntentRoutes[0]);
+  const [listening, setListening] = useState(false);
+  const [spoken, setSpoken] = useState(false);
+
+  function routeQuery(nextQuery = query) {
+    const nextIntent = matchVoiceIntent(nextQuery);
+    setQuery(nextQuery);
+    setIntent(nextIntent);
+    return nextIntent;
+  }
+
+  function speak(text = intent.reply) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "zh-CN";
+    utterance.rate = 1.08;
+    utterance.pitch = intent.id === "program" ? 1.05 : 0.92;
+    window.speechSynthesis.speak(utterance);
+    setSpoken(true);
+  }
+
+  function startListening() {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any })
+        .webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      const nextIntent = routeQuery(query);
+      speak(nextIntent.reply);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setListening(true);
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || query;
+      const nextIntent = routeQuery(transcript);
+      speak(nextIntent.reply);
+    };
+    recognition.start();
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <h3 className="text-lg font-semibold">语音对话</h3>
-        <div className="mt-4 rounded-xl border border-sky-300/20 bg-sky-300/8 p-4">
-          <p className="text-sm leading-6 text-slate-300">
-            玩家：我孙尚香现在 9 分钟两件套，对面兰陵王一直切我，下一件先破晓还是保命？
-          </p>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">对话式小精灵</h3>
+          <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs text-slate-400">
+            Voice intent router
+          </span>
         </div>
+
+        <div className="mt-5 flex items-center gap-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/8 p-4">
+          <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-slate-950 shadow-lg shadow-emerald-950/40">
+            <Bot size={34} />
+            <span
+              className={`absolute inset-0 rounded-full border border-emerald-200 ${
+                listening ? "animate-ping" : ""
+              }`}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-emerald-100">KPL 陪玩小精灵</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              点击麦克风后说一句局内问题；系统会识别意图，再分发到出装、站位、复盘或节目切片路由。
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-sky-300/20 bg-sky-300/8 p-4">
+          <p className="text-xs text-slate-500">玩家语音转写</p>
+          <textarea
+            className="mt-2 h-24 w-full resize-none rounded-lg border border-white/10 bg-black/25 p-3 text-sm leading-6 text-slate-100 outline-none focus:border-sky-300/60"
+            onChange={(event) => setQuery(event.target.value)}
+            value={query}
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              className="flex items-center gap-2 rounded-lg bg-sky-300 px-3 py-2 text-sm font-semibold text-slate-950"
+              onClick={startListening}
+              type="button"
+            >
+              <Mic2 size={15} />
+              {listening ? "正在听..." : "按住说话 Demo"}
+            </button>
+            <button
+              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-200"
+              onClick={() => {
+                const nextIntent = routeQuery(query);
+                speak(nextIntent.reply);
+              }}
+              type="button"
+            >
+              识别意图并播报
+            </button>
+            <button
+              className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-200"
+              onClick={() => speak(intent.reply)}
+              type="button"
+            >
+              重新播放回复
+            </button>
+          </div>
+        </div>
+
         <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-4">
-          <div className="flex items-center gap-2 text-emerald-100">
+          <div className="flex items-center justify-between gap-3 text-emerald-100">
+            <div className="flex items-center gap-2">
             <Volume2 size={16} />
             <p className="font-semibold">陪玩回复脚本</p>
+            </div>
+            <span className="rounded-md bg-black/20 px-2 py-1 text-xs">
+              {spoken ? "已播报" : "待播报"}
+            </span>
           </div>
-          <p className="mt-3 text-sm leading-6">
-            先别急着补破晓。兰陵王一直盯你，这波先做名刀小件，团战站辅助身后，等他露头再一技能拉开反打。
+          <p className="mt-3 text-sm leading-6 text-slate-100">
+            {intent.reply}
           </p>
         </div>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <h3 className="text-lg font-semibold">声线与链路</h3>
-        <div className="mt-4 grid gap-3">
+        <h3 className="text-lg font-semibold">意图路由与声线</h3>
+        <div className="mt-4 grid gap-2">
+          {voiceIntentRoutes.map((item) => (
+            <button
+              className={`rounded-xl border p-3 text-left transition ${
+                intent.id === item.id
+                  ? "border-emerald-300/50 bg-emerald-300/10"
+                  : "border-white/10 bg-white/[0.035] hover:border-white/20"
+              }`}
+              key={item.id}
+              onClick={() => {
+                setQuery(item.sample);
+                setIntent(item);
+              }}
+              type="button"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold">{item.label}</p>
+                <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-slate-300">
+                  {item.route}
+                </span>
+              </div>
+              <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
+                {item.sample}
+              </p>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3">
           {voicePresets.map(([name, description]) => (
             <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3" key={name}>
               <Headphones size={16} className="text-emerald-200" />
@@ -968,7 +1150,8 @@ function VoiceModule() {
             </div>
           ))}
         </div>
-        <div className="mt-4 grid gap-2">
+
+        <div className="mt-5 grid gap-2">
           {voiceAgentSteps.map(([title, description], index) => (
             <div className="flex gap-3 rounded-lg bg-black/20 px-3 py-2 text-xs" key={title}>
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-300 font-bold text-slate-950">
