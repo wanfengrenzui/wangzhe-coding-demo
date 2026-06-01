@@ -136,13 +136,18 @@ export default async function HeroDetailPage({
         <div className="space-y-5">
           <Panel icon={Boxes} title="铭文搭配建议">
             <div className="grid grid-cols-3 gap-4 text-center">
-              {detail.inscriptions.map(([name, desc]) => (
-                <div key={name}>
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg border border-amber-300 bg-amber-50 font-semibold text-amber-700">
-                    铭文
-                  </div>
-                  <p className="mt-3 font-semibold">{name}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">{desc}</p>
+              {detail.inscriptions.map((item) => (
+                <div key={item.name}>
+                  <AssetImage
+                    alt={item.name}
+                    className="mx-auto h-16 w-16 overflow-hidden rounded-lg border border-amber-300"
+                    fallback="铭文"
+                    src={item.image}
+                  />
+                  <p className="mt-3 font-semibold">{item.name}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    {item.description}
+                  </p>
                 </div>
               ))}
             </div>
