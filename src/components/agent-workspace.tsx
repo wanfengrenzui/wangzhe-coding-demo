@@ -10,15 +10,18 @@ import {
   ClipboardCheck,
   FileText,
   Gauge,
+  Headphones,
   Layers3,
   Loader2,
   MessageSquareText,
+  Mic2,
   Play,
   RadioTower,
   Search,
   ShieldCheck,
   Sparkles,
   Target,
+  Volume2,
   WandSparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -28,7 +31,7 @@ import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 import type { IntentResult } from "@/lib/intent";
 import type { KnowledgeResult } from "@/lib/knowledge";
 
-type FeatureKey = "agent" | "content" | "knowledge" | "feedback" | "evaluation";
+type FeatureKey = "agent" | "content" | "knowledge" | "voice" | "feedback" | "evaluation";
 
 type Feature = {
   key: FeatureKey;
@@ -107,6 +110,13 @@ const features: Feature[] = [
     status: "待扩展",
   },
   {
+    key: "voice",
+    label: "选手声线陪玩",
+    short: "语音对话 / 局内建议",
+    icon: Mic2,
+    status: "概念演示",
+  },
+  {
     key: "feedback",
     label: "玩家反馈分析",
     short: "聚类情绪与需求",
@@ -148,6 +158,33 @@ const evaluationRows = [
   ["赛事沉浸感", 91],
   ["事实准确性", 84],
   ["传播适配度", 86],
+];
+
+const voicePresets = [
+  ["发育路选手声线", "温和但决策明确，适合射手出装和团战站位提醒"],
+  ["KPL 解说声线", "语速更快，强调画面感和团战节奏"],
+  ["战术教练声线", "短句指令，偏复盘和临场纠错"],
+];
+
+const voiceAgentSteps = [
+  ["语音识别", "把玩家语音转成 query：孙尚香现在先补破晓还是保命装？"],
+  ["场景检索", "命中英雄技能、装备库、巅峰 2000+ 出装样本和 KPL 表达"],
+  ["回复生成", "生成 6 秒内可播报的短句，避免长篇文字压过局内信息"],
+  ["安全审核", "过滤冒充真实选手承诺、攻击性表达和不确定战术结论"],
+];
+
+const evaluationDimensions = [
+  ["事实准确性", 0.35, 84, "英雄、技能、装备、比分和资源归属不能错"],
+  ["王者专业度", 0.25, 88, "符合分路、版本、KPL 解说和高分段语境"],
+  ["赛事沉浸感", 0.2, 91, "能不能让用户听出团战画面和节奏变化"],
+  ["传播适配度", 0.12, 86, "标题、口播是否适合短视频和社区传播"],
+  ["安全合规", 0.08, 94, "不冒充真人、不输出辱骂、不编造确定数据"],
+];
+
+const evaluationSamples = [
+  ["A 样本", "孙尚香巅峰 2000+ 出装回答", 87, "通过", "命中装备逻辑，需补充样本来源标签"],
+  ["B 样本", "KPL 团战切片解说稿", 91, "通过", "画面感强，事实校验无明显冲突"],
+  ["C 样本", "选手声线陪玩回复", 78, "复核", "语气像真人承诺，需要改成风格化声线"],
 ];
 
 const defaultMatchLog = `00:45 双方中路抢线，蓝色方小乔拿到线权
@@ -222,6 +259,13 @@ function activeFeatureCopy(feature: FeatureKey, result: AgentRunResult | null) {
       body: "维护英雄定位、技能机制、分路打法、KPL 高频表达和易错事实，作为 Agent 的业务知识源。",
     };
   }
+  if (feature === "voice") {
+    return {
+      eyebrow: "Voice Companion",
+      title: "选手声线陪玩",
+      body: "把 KPL 语料、英雄知识和局内场景压缩成短语音回复，先做语音对话 Demo，后续可接 TTS 声线和实时游戏状态。",
+    };
+  }
   if (feature === "feedback") {
     return {
       eyebrow: "User Research",
@@ -235,7 +279,7 @@ function activeFeatureCopy(feature: FeatureKey, result: AgentRunResult | null) {
       title: "模型效果评估",
       body:
         result?.artifacts.reviewMemo ||
-        "按专业度、沉浸感、事实准确性、传播性做发布前验收，低置信度输出进入人工复核池。",
+        "用事实准确性、王者专业度、赛事沉浸感、传播适配度和安全合规做加权评分，低分样本进入人工复核池。",
     };
   }
   return {
@@ -805,6 +849,63 @@ export function AgentWorkspace() {
                       </div>
                     ) : null}
 
+                    {activeFeature === "voice" ? (
+                      <div className="space-y-3">
+                        <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">语音对话场景</p>
+                            <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-sky-100">
+                              Demo: text → voice script
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-slate-300">
+                            玩家：我孙尚香现在 9 分钟两件套，对面兰陵王一直切我，下一件先破晓还是保命？
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {voicePresets.map(([name, description]) => (
+                            <div
+                              className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                              key={name}
+                            >
+                              <Headphones size={16} className="text-emerald-200" />
+                              <p className="mt-2 text-sm font-medium">{name}</p>
+                              <p className="mt-1 line-clamp-3 text-[11px] leading-5 text-slate-500">
+                                {description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+                          <div className="flex items-center gap-2 text-emerald-100">
+                            <Volume2 size={16} />
+                            <p className="text-sm font-medium">陪玩回复脚本</p>
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-slate-100">
+                            先别急着补破晓。兰陵王一直盯你，这波先做名刀小件，团战站辅助身后，等他露头再一技能拉开反打。破晓下一件补，输出不会断。
+                          </p>
+                          <div className="mt-3 grid gap-2">
+                            {voiceAgentSteps.map(([title, description], index) => (
+                              <div
+                                className="flex items-start gap-3 rounded-lg bg-black/20 px-3 py-2"
+                                key={title}
+                              >
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-300 text-xs font-bold text-slate-950">
+                                  {index + 1}
+                                </span>
+                                <div>
+                                  <p className="text-xs font-medium text-slate-100">{title}</p>
+                                  <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
+                                    {description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {activeFeature === "feedback" ? (
                       <div className="space-y-3">
                         {forumPosts.map((post) => (
@@ -828,8 +929,39 @@ export function AgentWorkspace() {
                     ) : null}
 
                     {activeFeature === "evaluation" ? (
-                      <div className="grid gap-3">
-                        {evaluationPipeline.map(([title, description], index) => (
+                      <div className="space-y-3">
+                        <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+                          <p className="text-sm font-medium">评分机制</p>
+                          <p className="mt-2 text-xs leading-5 text-slate-300">
+                            总分 = Σ(维度分 × 权重)。85 分以上可发布，70-84 分进入人工复核，低于 70 分禁止发布并回收为负样本。
+                          </p>
+                        </div>
+                        <div className="grid gap-2">
+                          {evaluationDimensions.map(([name, weight, score, rule]) => (
+                            <div
+                              className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                              key={name as string}
+                            >
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-slate-100">{name}</span>
+                                <span className="text-emerald-200">
+                                  {score as number} × {Math.round((weight as number) * 100)}%
+                                </span>
+                              </div>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                                <div
+                                  className="h-full rounded-full bg-emerald-300"
+                                  style={{ width: `${score}%` }}
+                                />
+                              </div>
+                              <p className="mt-2 text-[11px] leading-5 text-slate-500">
+                                {rule}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid gap-2">
+                          {evaluationPipeline.map(([title, description], index) => (
                           <div
                             className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
                             key={title}
@@ -846,7 +978,8 @@ export function AgentWorkspace() {
                               </div>
                             </div>
                           </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     ) : null}
                   </div>
@@ -891,6 +1024,47 @@ export function AgentWorkspace() {
                       </div>
                     ))}
                   </div>
+
+                  {activeFeature === "evaluation" ? (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                      <p className="text-xs font-medium">评估样本池</p>
+                      <div className="mt-2 space-y-2">
+                        {evaluationSamples.map(([id, name, score, status, note]) => (
+                          <div
+                            className="rounded-lg bg-black/20 px-3 py-2 text-xs"
+                            key={id}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="font-medium text-slate-100">{name}</span>
+                              <span
+                                className={`rounded-md px-2 py-1 text-[11px] ${
+                                  status === "通过"
+                                    ? "bg-emerald-300/15 text-emerald-100"
+                                    : "bg-amber-300/15 text-amber-100"
+                                }`}
+                              >
+                                {score} / {status}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                              {note}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeFeature === "voice" ? (
+                    <div className="mt-3 rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+                      <p className="text-xs font-medium text-sky-100">语音陪玩验收</p>
+                      <div className="mt-2 grid gap-2 text-xs text-slate-300">
+                        <p>延迟目标：单轮回复 2.5 秒内</p>
+                        <p>播报长度：6-8 秒，不遮挡关键团战信息</p>
+                        <p>安全边界：声线风格化，不宣称真人实时陪玩</p>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     <p className="text-xs font-medium">标题候选</p>

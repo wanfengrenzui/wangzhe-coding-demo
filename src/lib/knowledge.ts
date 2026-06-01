@@ -293,6 +293,9 @@ function parseRelationGroups(html: string, heroes: HeroSummary[]) {
 
     return ids.map((id, itemIndex) => ({
       name: heroes.find((hero) => hero.id === id)?.name || String(id),
+      avatar:
+        heroes.find((hero) => hero.id === id)?.avatar ||
+        `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${id}/${id}.jpg`,
       note: notes[itemIndex] || "官方英雄关系推荐。",
     }));
   };

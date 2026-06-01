@@ -86,25 +86,19 @@ export default async function HeroDetailPage({
           </Panel>
 
           <Panel icon={Users} title="英雄关系">
-            <div className="grid grid-cols-3 border-b border-slate-200 text-center text-sm">
-              <div className="border-b-2 border-amber-300 pb-2">最佳搭档</div>
-              <div className="pb-2">压制英雄</div>
-              <div className="pb-2">被压制英雄</div>
-            </div>
-            <div className="mt-5 grid grid-cols-[170px_1fr] gap-5">
-              <div className="flex gap-3">
-                {detail.relations.best.map((item) => (
-                  <div
-                    className="rounded-lg bg-slate-100 px-3 py-2 text-center text-sm"
-                    key={item.name}
-                  >
-                    {item.name}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm leading-7 text-slate-700">
-                {detail.relations.best.map((item) => `${item.name}：${item.note}`).join(" ")}
-              </p>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <RelationColumn
+                items={detail.relations.best}
+                title="最佳搭档"
+              />
+              <RelationColumn
+                items={detail.relations.counter}
+                title="压制英雄"
+              />
+              <RelationColumn
+                items={detail.relations.restrained}
+                title="被压制英雄"
+              />
             </div>
           </Panel>
 
@@ -201,6 +195,43 @@ function createCommentarySamples(heroName: string) {
       quote: `如果要给观众讲清楚${heroName}，不能只报技能名，要把进场时机、输出目标和队友保护关系说出来。`,
     },
   ];
+}
+
+function RelationColumn({
+  items,
+  title,
+}: {
+  items: Array<{ avatar?: string; name: string; note: string }>;
+  title: string;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <p className="border-b border-amber-300 pb-2 text-center text-sm font-semibold">
+        {title}
+      </p>
+      <div className="mt-3 flex justify-center gap-3">
+        {items.map((item) => (
+          <div className="text-center" key={item.name}>
+            <AssetImage
+              alt={item.name}
+              className="mx-auto h-14 w-14 overflow-hidden rounded-lg border border-slate-200"
+              fallback={item.name.slice(0, 2)}
+              src={item.avatar}
+            />
+            <p className="mt-1 text-xs font-semibold">{item.name}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 space-y-2">
+        {items.map((item) => (
+          <p className="text-xs leading-5 text-slate-700" key={item.note}>
+            <span className="font-semibold">{item.name}：</span>
+            {item.note}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function Panel({
