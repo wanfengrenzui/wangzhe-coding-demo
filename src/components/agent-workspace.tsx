@@ -7,7 +7,6 @@ import {
   Bot,
   CalendarDays,
   CheckCircle2,
-  ChevronRight,
   ClipboardCheck,
   ExternalLink,
   FileText,
@@ -25,7 +24,6 @@ import {
   Target,
   Trophy,
   Volume2,
-  WandSparkles,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -509,12 +507,6 @@ export function AgentWorkspace() {
             })}
           </nav>
 
-          <div className="mt-auto rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
-            <p className="text-xs font-medium text-sky-100">产品结构</p>
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-              Agent 是任务链路；其他模块是业务工具，不再复用 Agent 面板。
-            </p>
-          </div>
         </aside>
 
         <section className="flex min-h-0 flex-col">
@@ -548,10 +540,6 @@ export function AgentWorkspace() {
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
-            <div className="mb-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-              <p className="max-w-3xl text-sm leading-6 text-slate-300">{copy.body}</p>
-            </div>
-
             {activeFeature === "agent" ? (
               <AgentModule
                 completedCount={completedCount}
@@ -847,6 +835,15 @@ function ContentModule({
   setMatchLog: (value: string) => void;
   slices: Array<{ time: string; type: string; title: string; score: number; reason: string }>;
 }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const selectedSlice = slices[selectedIndex] || slices[0];
+  const generatedTitle = selectedSlice
+    ? `等一个${selectedSlice.type}，比赛节奏直接变天`
+    : "等待候选切片";
+  const generatedScript = selectedSlice
+    ? `这一波发生在 ${selectedSlice.time}。${selectedSlice.title}。从画面看，关键点不是单个击杀，而是技能链和站位同时打开，适合剪成 15 秒高光。`
+    : "点击生成候选切片后，这里会自动生成解说口播。";
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1fr_320px]">
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
@@ -865,20 +862,41 @@ function ContentModule({
           onChange={(event) => setMatchLog(event.target.value)}
           className="mt-4 h-56 w-full resize-none rounded-xl border border-white/10 bg-black/30 p-3 text-xs leading-5 outline-none focus:border-emerald-300/60"
         />
-        <button
-          className="mt-3 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-slate-950"
-          onClick={generateSlices}
-          type="button"
-        >
-          生成候选切片
-        </button>
+        <div className="mt-3 flex gap-2">
+          <button
+            className="rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-slate-950"
+            onClick={() => {
+              generateSlices();
+              setSelectedIndex(0);
+            }}
+            type="button"
+          >
+            生成候选切片
+          </button>
+          <button
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200"
+            onClick={() => setMatchLog(defaultMatchLog)}
+            type="button"
+          >
+            重置转写
+          </button>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
         <h3 className="text-lg font-semibold">切片结果</h3>
         <div className="mt-4 grid gap-3">
-          {slices.map((item) => (
-            <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3" key={`${item.time}-${item.title}`}>
+          {slices.map((item, index) => (
+            <button
+              className={`rounded-xl border p-3 text-left transition ${
+                selectedIndex === index
+                  ? "border-emerald-300/50 bg-emerald-300/10"
+                  : "border-white/10 bg-white/[0.035] hover:border-white/20"
+              }`}
+              key={`${item.time}-${item.title}`}
+              onClick={() => setSelectedIndex(index)}
+              type="button"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="rounded-md bg-sky-300/15 px-2 py-1 text-xs text-sky-100">{item.time}</span>
@@ -888,13 +906,27 @@ function ContentModule({
               </div>
               <p className="mt-2 text-sm">{item.title}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">{item.reason}</p>
-            </div>
+            </button>
           ))}
         </div>
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <h3 className="text-lg font-semibold">发布队列</h3>
+        <h3 className="text-lg font-semibold">生成与发布</h3>
+        <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+          <p className="text-xs text-slate-500">短视频标题</p>
+          <p className="mt-2 text-sm font-semibold text-emerald-100">{generatedTitle}</p>
+          <p className="mt-3 text-xs text-slate-500">解说口播</p>
+          <p className="mt-2 text-xs leading-5 text-slate-200">{generatedScript}</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
+            <button className="rounded-lg bg-emerald-300 px-2 py-2 font-semibold text-slate-950" type="button">
+              加入发布队列
+            </button>
+            <button className="rounded-lg border border-white/10 px-2 py-2 text-slate-200" type="button">
+              重新生成
+            </button>
+          </div>
+        </div>
         <div className="mt-4 space-y-3">
           {publishQueue.map(([time, title, artifact, status]) => (
             <div className="rounded-xl bg-white/[0.035] p-3 text-xs" key={time}>
@@ -982,6 +1014,7 @@ function matchVoiceIntent(query: string) {
 function VoiceModule() {
   const [query, setQuery] = useState(voiceIntentRoutes[0].sample);
   const [intent, setIntent] = useState(voiceIntentRoutes[0]);
+  const [voicePreset, setVoicePreset] = useState(voicePresets[0][0]);
   const [listening, setListening] = useState(false);
   const [spoken, setSpoken] = useState(false);
 
@@ -997,8 +1030,10 @@ function VoiceModule() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "zh-CN";
-    utterance.rate = 1.08;
-    utterance.pitch = intent.id === "program" ? 1.05 : 0.92;
+    utterance.rate =
+      voicePreset === "KPL 解说声线" ? 1.18 : voicePreset === "战术教练声线" ? 1.02 : 1.08;
+    utterance.pitch =
+      voicePreset === "KPL 解说声线" ? 1.08 : voicePreset === "战术教练声线" ? 0.86 : 0.94;
     window.speechSynthesis.speak(utterance);
     setSpoken(true);
   }
@@ -1143,11 +1178,20 @@ function VoiceModule() {
 
         <div className="mt-5 grid gap-3">
           {voicePresets.map(([name, description]) => (
-            <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3" key={name}>
+            <button
+              className={`rounded-xl border p-3 text-left transition ${
+                voicePreset === name
+                  ? "border-emerald-300/50 bg-emerald-300/10"
+                  : "border-white/10 bg-white/[0.035] hover:border-white/20"
+              }`}
+              key={name}
+              onClick={() => setVoicePreset(name)}
+              type="button"
+            >
               <Headphones size={16} className="text-emerald-200" />
               <p className="mt-2 font-semibold">{name}</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -1170,19 +1214,107 @@ function VoiceModule() {
 }
 
 function FeedbackModule() {
+  const [posts, setPosts] = useState(
+    feedbackPosts.map(([user, tag, content, sentiment], index) => ({
+      id: index + 1,
+      user,
+      tag,
+      content,
+      sentiment,
+      likes: [24, 18, 31, 16][index] || 8,
+      replies: [6, 4, 9, 3][index] || 1,
+    })),
+  );
+  const [activeTag, setActiveTag] = useState("全部");
+  const [draft, setDraft] = useState("希望视频切片能自动标出胜负手，比如谁先开团、谁打满输出。");
+  const filteredPosts =
+    activeTag === "全部" ? posts : posts.filter((post) => post.tag === activeTag);
+  const tags = ["全部", ...Array.from(new Set(posts.map((post) => post.tag)))];
+
+  function publishPost() {
+    const content = draft.trim();
+    if (!content) return;
+    const sentiment = /希望|想|能不能|需要/.test(content) ? "需求" : "讨论";
+    setPosts((current) => [
+      {
+        id: Date.now(),
+        user: "Demo 用户",
+        tag: activeTag === "全部" ? "节目剪辑" : activeTag,
+        content,
+        sentiment,
+        likes: 0,
+        replies: 0,
+      },
+      ...current,
+    ]);
+    setDraft("");
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <h3 className="text-lg font-semibold">玩家论坛</h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-semibold">玩家论坛</h3>
+          <div className="flex gap-2">
+            {tags.map((tag) => (
+              <button
+                className={`rounded-lg px-3 py-1.5 text-xs ${
+                  activeTag === tag
+                    ? "bg-emerald-300 text-slate-950"
+                    : "border border-white/10 text-slate-300"
+                }`}
+                key={tag}
+                onClick={() => setActiveTag(tag)}
+                type="button"
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
+          <textarea
+            className="h-24 w-full resize-none rounded-lg border border-white/10 bg-black/25 p-3 text-sm leading-6 outline-none focus:border-emerald-300/60"
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="发布一条玩家反馈..."
+            value={draft}
+          />
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-xs text-slate-500">套用论坛壳：发帖、筛选、点赞、回复数、情绪标签</p>
+            <button
+              className="rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-slate-950"
+              onClick={publishPost}
+              type="button"
+            >
+              发布反馈
+            </button>
+          </div>
+        </div>
         <div className="mt-4 grid gap-3">
-          {feedbackPosts.map(([user, tag, content, sentiment]) => (
-            <article className="rounded-xl border border-white/10 bg-white/[0.035] p-4" key={content}>
+          {filteredPosts.map((post) => (
+            <article className="rounded-xl border border-white/10 bg-white/[0.035] p-4" key={post.id}>
               <div className="flex items-center justify-between">
-                <p className="font-semibold">{user}</p>
-                <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs">{sentiment}</span>
+                <p className="font-semibold">{post.user}</p>
+                <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs">{post.sentiment}</span>
               </div>
-              <p className="mt-1 text-xs text-emerald-200">{tag}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{content}</p>
+              <p className="mt-1 text-xs text-emerald-200">{post.tag}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{post.content}</p>
+              <div className="mt-3 flex gap-2 text-xs text-slate-400">
+                <button
+                  className="rounded-md border border-white/10 px-2 py-1 hover:text-emerald-100"
+                  onClick={() =>
+                    setPosts((current) =>
+                      current.map((item) =>
+                        item.id === post.id ? { ...item, likes: item.likes + 1 } : item,
+                      ),
+                    )
+                  }
+                  type="button"
+                >
+                  赞 {post.likes}
+                </button>
+                <span className="rounded-md border border-white/10 px-2 py-1">回复 {post.replies}</span>
+              </div>
             </article>
           ))}
         </div>
