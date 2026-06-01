@@ -20,6 +20,11 @@ export type EquipmentRecord = {
   description: string;
 };
 
+export type HeroSummary = Omit<HeroRecord, "skills"> & {
+  avatar: string;
+  cover: string;
+};
+
 export type KnowledgeResult = {
   heroes: HeroRecord[];
   equipment: EquipmentRecord[];
@@ -69,6 +74,21 @@ const fallbackHeroSkills: Record<string, HeroRecord["skills"]> = {
     },
   ],
 };
+
+const recommendedItems = [
+  "急速战靴",
+  "无尽战刃",
+  "宗师之力",
+  "破晓",
+  "泣血之刃",
+  "名刀·司命",
+];
+
+const inscriptionSet = [
+  ["祸源", "暴击率+1.6%"],
+  ["鹰眼", "物理攻击+0.9 / 物理穿透+6.4"],
+  ["隐匿", "物理攻击+1.6 / 移速+1%"],
+];
 
 function stripHtml(value = "") {
   return value
@@ -183,5 +203,94 @@ export async function getKnowledge(query = ""): Promise<KnowledgeResult> {
       "https://pvp.qq.com/web201605/js/item.json",
       `https://pvp.qq.com/web201605/herodetail/${matchedHero.ename}.shtml`,
     ],
+  };
+}
+
+export async function getHeroSummaries(): Promise<HeroSummary[]> {
+  const heroList = await fetchJson<
+    Array<{
+      ename: number;
+      cname: string;
+      title: string;
+      hero_type: number;
+      id_name: string;
+    }>
+  >("https://pvp.qq.com/web201605/js/herolist.json");
+
+  return heroList.map((hero) => ({
+    id: hero.ename,
+    name: hero.cname,
+    title: hero.title,
+    role: heroTypeMap[hero.hero_type] || "综合",
+    pinyin: hero.id_name,
+    avatar: `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${hero.ename}/${hero.ename}.jpg`,
+    cover: `https://game.gtimg.cn/images/yxzj/img201606/skin/hero-info/${hero.ename}/${hero.ename}-bigskin-1.jpg`,
+  }));
+}
+
+export async function getEquipmentList(): Promise<EquipmentRecord[]> {
+  const itemList = await fetchJson<
+    Array<{
+      item_id: number;
+      item_name: string;
+      item_type: number;
+      price: number;
+      total_price: number;
+      des1: string;
+      des2?: string;
+    }>
+  >("https://pvp.qq.com/web201605/js/item.json");
+
+  return itemList.map((item) => ({
+    id: item.item_id,
+    name: item.item_name,
+    type: itemTypeMap[item.item_type] || "通用",
+    price: item.price,
+    totalPrice: item.total_price,
+    description: stripHtml(`${item.des1 || ""} ${item.des2 || ""}`),
+  }));
+}
+
+export async function getHeroDetail(id: number) {
+  const heroes = await getHeroSummaries();
+  const equipment = await getEquipmentList();
+  const hero = heroes.find((item) => item.id === id) || heroes[0];
+  const fetchedSkills = await fetchHeroSkills(hero.id);
+  const skills =
+    fetchedSkills.length > 0 ? fetchedSkills : fallbackHeroSkills[hero.name] || [];
+  const build = recommendedItems
+    .map((name) => equipment.find((item) => item.name === name))
+    .filter(Boolean) as EquipmentRecord[];
+
+  return {
+    hero: {
+      ...hero,
+      skills,
+    },
+    inscriptions: inscriptionSet,
+    skillOrder: skills.slice(1, 3).map((skill, index) => ({
+      label: index === 0 ? "主升" : "副升",
+      skill: skill.name,
+      reason:
+        index === 0
+          ? "优先强化核心输出/机动技能，提高对线与团战拉扯能力。"
+          : "补足控制、减速或爆发能力，提升团战容错。",
+    })),
+    summonSkills: ["闪现", "净化"],
+    build,
+    relations: {
+      best: [
+        { name: "庄周", note: "提供解控与保护，让核心输出位更容易打满伤害。" },
+        { name: "瑶", note: "增强生存与追击能力，适合配合灵活射手。" },
+      ],
+      counter: [
+        { name: "兰陵王", note: "隐身切后排威胁高，需要视野和保命装应对。" },
+        { name: "宫本武藏", note: "锁定突进会压缩输出空间，需要队友保护。" },
+      ],
+      restrained: [
+        { name: "短手战士", note: "利用位移与射程优势持续拉扯消耗。" },
+        { name: "无位移射手", note: "爆发窗口更容易形成击杀压制。" },
+      ],
+    },
   };
 }

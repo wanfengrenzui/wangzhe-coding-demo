@@ -22,6 +22,7 @@ import {
   WandSparkles,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 import type { IntentResult } from "@/lib/intent";
@@ -721,6 +722,26 @@ export function AgentWorkspace() {
 
                     {activeFeature === "knowledge" ? (
                       <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Link
+                            className="rounded-xl border border-emerald-300/25 bg-emerald-300/10 p-3 text-sm font-semibold text-emerald-100"
+                            href="/knowledge/heroes"
+                          >
+                            英雄总览
+                            <p className="mt-1 text-[11px] font-normal text-slate-400">
+                              全英雄图片、定位、详情页
+                            </p>
+                          </Link>
+                          <Link
+                            className="rounded-xl border border-sky-300/25 bg-sky-300/10 p-3 text-sm font-semibold text-sky-100"
+                            href="/knowledge/equipment"
+                          >
+                            装备总览
+                            <p className="mt-1 text-[11px] font-normal text-slate-400">
+                              全装备分类、价格、属性
+                            </p>
+                          </Link>
+                        </div>
                         <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium">RAG 回答</p>
