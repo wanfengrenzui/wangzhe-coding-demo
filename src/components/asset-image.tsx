@@ -31,7 +31,6 @@ export function AssetImage({ alt, className = "", fallback, src }: AssetImagePro
       decoding="async"
       loading="lazy"
       onError={() => setFailed(true)}
-      referrerPolicy="no-referrer"
       src={src}
     />
   );

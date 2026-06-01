@@ -39,7 +39,7 @@ type Feature = {
 };
 
 const defaultTask =
-  "基于一段 KPL 团战素材生成短视频内容：8分30秒，中路抱团，射手绕后持续输出，开团位命中多人，团战打出0换4。请生成官方解说、主播口播、标题，并评估是否适合发布。";
+  "孙尚香在巅峰 2000 分以上的局通常做什么出装？请基于英雄技能、官方装备库和高分段出装样本，给出常规局、对面突进多、顺风压塔三种方案，并说明每套装备的取舍。";
 
 const waitingSteps: AgentStep[] = [
   {
@@ -255,7 +255,7 @@ export function AgentWorkspace() {
   const [error, setError] = useState("");
   const [activeFeature, setActiveFeature] = useState<FeatureKey>("agent");
   const [intentQuery, setIntentQuery] = useState(
-    "孙尚香在这个版本应该做什么装备？",
+    "孙尚香在巅峰 2000 分以上的局都是做什么出装？",
   );
   const [intentResult, setIntentResult] = useState<IntentResult | null>(null);
   const [isIntentLoading, setIsIntentLoading] = useState(false);
@@ -757,6 +757,31 @@ export function AgentWorkspace() {
                             {knowledge?.answer || "等待知识库检索结果。"}
                           </p>
                         </div>
+                        {knowledge?.rankedBuilds?.length ? (
+                          <div className="grid gap-2">
+                            {knowledge.rankedBuilds.slice(0, 3).map((sample) => (
+                              <div
+                                className="rounded-xl border border-amber-300/20 bg-amber-300/8 p-3"
+                                key={`${sample.hero}-${sample.scenario}`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-sm font-medium text-amber-100">
+                                    {sample.segment} / {sample.scenario}
+                                  </p>
+                                  <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-amber-100">
+                                    置信 {sample.confidence}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-xs leading-5 text-slate-300">
+                                  {sample.build.join(" → ")}
+                                </p>
+                                <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                                  {sample.reason}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
                         <div className="grid grid-cols-2 gap-2">
                           {(knowledge?.heroes || []).slice(0, 8).map((hero) => (
                             <div

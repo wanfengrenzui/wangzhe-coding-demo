@@ -53,7 +53,7 @@ export default async function HeroDetailPage({
                     alt={skill.name}
                     className="mx-auto h-20 w-20 overflow-hidden rounded-full border-2 border-amber-300"
                     fallback={skill.name.slice(0, 2)}
-                    src={`https://game.gtimg.cn/images/yxzj/img201606/heroimg/${hero.id}/${hero.id}0${index}.png`}
+                    src={skill.image}
                   />
                   <p className="mt-3 font-semibold">{skill.name}</p>
                   <p className="mt-1 text-xs text-slate-500">{skill.cost}</p>
