@@ -771,7 +771,8 @@ export function AgentWorkspace() {
                                 {hero.title}
                               </p>
                               <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">
-                                {hero.skills[0]?.description || "官方基础资料已同步，技能详情按 query 命中后补全。"}
+                                {hero.skills[0]?.description ||
+                                  "KPL 解说语料待沉淀：记录比赛、解说、原话和适用场景，用于让 Agent 学会这个英雄在赛事里的真实表达。"}
                               </p>
                             </div>
                           ))}

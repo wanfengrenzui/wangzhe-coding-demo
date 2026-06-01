@@ -1,5 +1,6 @@
 import { PackageSearch } from "lucide-react";
 import Link from "next/link";
+import { AssetImage } from "@/components/asset-image";
 import { getEquipmentList } from "@/lib/knowledge";
 
 export default async function EquipmentPage() {
@@ -24,6 +25,12 @@ export default async function EquipmentPage() {
         </Link>
       </header>
 
+      <section className="mx-auto mt-6 max-w-7xl rounded-lg border border-slate-200 bg-white p-4">
+        <p className="text-sm leading-6 text-slate-600">
+          装备图标直连官方 CDN，并在加载失败时显示稳定占位。后续可把装备属性、版本改动、英雄适配关系写入 RAG，用于回答“这个版本该怎么出装”这类 query。
+        </p>
+      </section>
+
       <section className="mx-auto mt-6 max-w-7xl space-y-6">
         {groups.map((group) => {
           const items = equipment.filter((item) => item.type === group);
@@ -37,9 +44,12 @@ export default async function EquipmentPage() {
                     className="rounded-lg border border-slate-200 bg-slate-50 p-3"
                     key={item.id}
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-amber-300 bg-white text-xs font-semibold text-amber-600">
-                      装备
-                    </div>
+                    <AssetImage
+                      alt={item.name}
+                      className="h-14 w-14 overflow-hidden rounded-full border border-amber-300"
+                      fallback="装备"
+                      src={`https://game.gtimg.cn/images/yxzj/img201606/itemimg/${item.id}.jpg`}
+                    />
                     <p className="mt-3 font-semibold">{item.name}</p>
                     <p className="mt-1 text-xs text-slate-500">总价 {item.totalPrice}</p>
                     <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-600">
