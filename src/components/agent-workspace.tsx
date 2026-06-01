@@ -5,6 +5,7 @@ import {
   BarChart3,
   BookOpenText,
   Bot,
+  CalendarDays,
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
@@ -21,6 +22,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  Trophy,
   Volume2,
   WandSparkles,
   type LucideIcon,
@@ -31,7 +33,14 @@ import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 import type { IntentResult } from "@/lib/intent";
 import type { KnowledgeResult } from "@/lib/knowledge";
 
-type FeatureKey = "agent" | "content" | "knowledge" | "voice" | "feedback" | "evaluation";
+type FeatureKey =
+  | "agent"
+  | "kpl"
+  | "content"
+  | "knowledge"
+  | "voice"
+  | "feedback"
+  | "evaluation";
 
 type Feature = {
   key: FeatureKey;
@@ -94,6 +103,13 @@ const features: Feature[] = [
     short: "自动完成内容闭环",
     icon: Sparkles,
     status: "主流程",
+  },
+  {
+    key: "kpl",
+    label: "KPL 赛事中心",
+    short: "节目 / 赛程 / 战队",
+    icon: Trophy,
+    status: "核心入口",
   },
   {
     key: "content",
@@ -173,6 +189,51 @@ const voiceAgentSteps = [
   ["安全审核", "过滤冒充真实选手承诺、攻击性表达和不确定战术结论"],
 ];
 
+const kplPrograms = [
+  {
+    title: "KPL 每日高光",
+    tag: "节目流",
+    match: "AG 超玩会 vs 狼队",
+    focus: "孙尚香后期两枪收割，适合生成短视频标题和选手声线陪玩回复",
+    score: 94,
+  },
+  {
+    title: "赛后复盘室",
+    tag: "复盘",
+    match: "eStarPro vs WB",
+    focus: "中路河道团技能链完整，适合沉淀解说语料和模型评估样本",
+    score: 89,
+  },
+  {
+    title: "选手第一视角",
+    tag: "陪玩素材",
+    match: "发育路专题",
+    focus: "走位、补装、开麦沟通都能拆成语音陪玩知识片段",
+    score: 92,
+  },
+];
+
+const kplSchedule = [
+  ["06-03 19:00", "AG 超玩会", "狼队", "焦点战"],
+  ["06-04 20:00", "eStarPro", "WB", "争夺上半区"],
+  ["06-05 19:00", "DRG", "TES.A", "季后赛卡位"],
+];
+
+const kplTeams = [
+  ["AG 超玩会", "强开团 / 发育路核心", "节目素材 38"],
+  ["重庆狼队", "边野联动 / 后期运营", "节目素材 34"],
+  ["武汉 eStarPro", "中野节奏 / 团战执行", "节目素材 29"],
+  ["北京 WB", "拉扯运营 / 控图", "节目素材 25"],
+];
+
+const kplAiActions = [
+  ["智能切片", "识别团战转折、资源团、个人高光，输出 15 秒节目片段"],
+  ["解说生成", "生成官方解说、主播口播、短视频标题三种版本"],
+  ["语料入库", "抽取英雄、装备、战术关键词，回写英雄语料库和 KPL 表达库"],
+  ["声线陪玩", "把节目里的选手决策压缩成局内 6 秒语音回复"],
+  ["效果评估", "按事实准确性、KPL 专业度、沉浸感和安全合规打分"],
+];
+
 const evaluationDimensions = [
   ["事实准确性", 0.35, 84, "英雄、技能、装备、比分和资源归属不能错"],
   ["王者专业度", 0.25, 88, "符合分路、版本、KPL 解说和高分段语境"],
@@ -250,6 +311,13 @@ function activeFeatureCopy(feature: FeatureKey, result: AgentRunResult | null) {
       body:
         result?.artifacts.creatorScript ||
         "选择团战素材后，生成官方解说、主播口播、短视频标题和赛后复盘摘要。",
+    };
+  }
+  if (feature === "kpl") {
+    return {
+      eyebrow: "KPL Hub",
+      title: "KPL 赛事中心",
+      body: "把节目视频、赛程和战队资料汇成赛事内容入口，AI 功能直接融入节目流：切片、生成、入库、陪玩和评估。",
     };
   }
   if (feature === "knowledge") {
@@ -764,6 +832,116 @@ export function AgentWorkspace() {
                       </div>
                     ) : null}
 
+                    {activeFeature === "kpl" ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            ["节目", "Videos", "节目流接 AI 切片和语料入库"],
+                            ["赛程", "Schedule", "比赛前自动生成看点和任务"],
+                            ["战队", "Teams", "战队风格沉淀到解说与陪玩"],
+                          ].map(([name, label, desc]) => (
+                            <div
+                              className="rounded-xl border border-white/10 bg-white/[0.035] p-3"
+                              key={name}
+                            >
+                              <p className="text-[11px] uppercase tracking-[0.18em] text-emerald-200">
+                                {label}
+                              </p>
+                              <p className="mt-1 text-sm font-semibold">{name}</p>
+                              <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-slate-500">
+                                {desc}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">节目流工作台</p>
+                            <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-emerald-100">
+                              AI 嵌入点
+                            </span>
+                          </div>
+                          <div className="mt-3 grid gap-2">
+                            {kplPrograms.map((program) => (
+                              <div
+                                className="rounded-xl border border-white/10 bg-black/20 p-3"
+                                key={program.title}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold">{program.title}</p>
+                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                      {program.match} / {program.tag}
+                                    </p>
+                                  </div>
+                                  <span className="rounded-md bg-emerald-300 px-2 py-1 text-[11px] font-semibold text-slate-950">
+                                    可用分 {program.score}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-xs leading-5 text-slate-300">
+                                  {program.focus}
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {["切片", "解说", "入库", "陪玩", "评估"].map((item) => (
+                                    <span
+                                      className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] text-slate-300"
+                                      key={item}
+                                    >
+                                      {item}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
+                            <div className="flex items-center gap-2">
+                              <CalendarDays size={15} className="text-sky-200" />
+                              <p className="text-sm font-medium">赛程看点</p>
+                            </div>
+                            <div className="mt-3 space-y-2">
+                              {kplSchedule.map(([time, left, right, tag]) => (
+                                <div
+                                  className="rounded-lg bg-black/20 px-3 py-2 text-xs"
+                                  key={`${time}-${left}`}
+                                >
+                                  <p className="text-slate-400">{time}</p>
+                                  <p className="mt-1 text-slate-100">
+                                    {left} vs {right}
+                                  </p>
+                                  <p className="mt-0.5 text-[11px] text-emerald-200">{tag}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
+                            <div className="flex items-center gap-2">
+                              <Trophy size={15} className="text-amber-200" />
+                              <p className="text-sm font-medium">战队资料</p>
+                            </div>
+                            <div className="mt-3 space-y-2">
+                              {kplTeams.map(([team, style, count]) => (
+                                <div
+                                  className="rounded-lg bg-black/20 px-3 py-2 text-xs"
+                                  key={team}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="font-medium text-slate-100">{team}</p>
+                                    <span className="text-[11px] text-slate-500">{count}</span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] text-slate-400">{style}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {activeFeature === "knowledge" ? (
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-2">
@@ -1062,6 +1240,22 @@ export function AgentWorkspace() {
                         <p>延迟目标：单轮回复 2.5 秒内</p>
                         <p>播报长度：6-8 秒，不遮挡关键团战信息</p>
                         <p>安全边界：声线风格化，不宣称真人实时陪玩</p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeFeature === "kpl" ? (
+                    <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+                      <p className="text-xs font-medium text-emerald-100">节目 AI 链路</p>
+                      <div className="mt-2 space-y-2">
+                        {kplAiActions.map(([name, desc]) => (
+                          <div className="rounded-lg bg-black/20 px-3 py-2 text-xs" key={name}>
+                            <p className="font-medium text-slate-100">{name}</p>
+                            <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
+                              {desc}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ) : null}
