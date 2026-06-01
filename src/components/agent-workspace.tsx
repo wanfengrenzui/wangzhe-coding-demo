@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  ExternalLink,
   FileText,
   Gauge,
   Headphones,
@@ -232,6 +233,45 @@ const kplAiActions = [
   ["语料入库", "抽取英雄、装备、战术关键词，回写英雄语料库和 KPL 表达库"],
   ["声线陪玩", "把节目里的选手决策压缩成局内 6 秒语音回复"],
   ["效果评估", "按事实准确性、KPL 专业度、沉浸感和安全合规打分"],
+];
+
+const kplVideoSources = [
+  {
+    title: "2019 KPL 春季赛总决赛回放",
+    source: "Bilibili",
+    url: "https://www.bilibili.com/video/BV1R4411V7s2/",
+    scene: "完整比赛回放，适合演示长视频拆解、多局切分和赛后内容生成",
+    status: "可导入",
+  },
+  {
+    title: "总决赛发育路对位专题",
+    source: "玩加电竞 / KPL 官方微博来源",
+    url: "https://www.wanplus.cn/kog/video/1557654",
+    scene: "发育路英雄、选手表达和出装决策，可接声线陪玩 Demo",
+    status: "可导入",
+  },
+  {
+    title: "赛中镜头：AG 反打零换三",
+    source: "玩加电竞 / KPL 官方微博来源",
+    url: "https://m.wanplus.cn/kog/video/1448245",
+    scene: "短高光片段，适合演示自动切片、标题生成和发布审核",
+    status: "高光样本",
+  },
+];
+
+const videoPipeline = [
+  ["导入视频 URL", "记录来源、版权备注、比赛/节目元数据，不把视频文件写入仓库"],
+  ["抽帧 + OCR", "识别比分、时间、英雄头像、装备栏和团战 UI 变化"],
+  ["ASR + 解说转写", "把解说语音转成文本，按英雄、战队、选手、战术标签入库"],
+  ["高光检测", "融合击杀播报、经济变化、音量峰值和画面切换，产出候选切片"],
+  ["内容生成", "生成短视频标题、封面文案、官方解说稿、主播口播和陪玩回复"],
+  ["发布审核", "模型评估通过后进入待发布队列，保留来源链接和人工复核记录"],
+];
+
+const publishQueue = [
+  ["00:08:30-00:08:47", "孙尚香两枪收割", "标题/口播已生成", "待人工复核"],
+  ["00:14:02-00:14:18", "龙坑反打零换三", "解说语料已入库", "可发布"],
+  ["00:21:40-00:22:05", "高地防守翻盘", "声线陪玩脚本已生成", "待评估"],
 ];
 
 const evaluationDimensions = [
@@ -897,6 +937,44 @@ export function AgentWorkspace() {
                           </div>
                         </div>
 
+                        <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">真实视频素材池</p>
+                            <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-sky-100">
+                              外链导入
+                            </span>
+                          </div>
+                          <div className="mt-3 grid gap-2">
+                            {kplVideoSources.map((video) => (
+                              <a
+                                className="group rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-sky-300/40 hover:bg-sky-300/10"
+                                href={video.url}
+                                key={video.url}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-100">
+                                      {video.title}
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                      {video.source} / {video.status}
+                                    </p>
+                                  </div>
+                                  <ExternalLink
+                                    className="text-slate-500 group-hover:text-sky-100"
+                                    size={15}
+                                  />
+                                </div>
+                                <p className="mt-2 text-xs leading-5 text-slate-300">
+                                  {video.scene}
+                                </p>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-2">
                           <div className="rounded-xl border border-white/10 bg-white/[0.035] p-3">
                             <div className="flex items-center gap-2">
@@ -1246,13 +1324,34 @@ export function AgentWorkspace() {
 
                   {activeFeature === "kpl" ? (
                     <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
-                      <p className="text-xs font-medium text-emerald-100">节目 AI 链路</p>
+                      <p className="text-xs font-medium text-emerald-100">视频处理链路</p>
                       <div className="mt-2 space-y-2">
-                        {kplAiActions.map(([name, desc]) => (
+                        {videoPipeline.map(([name, desc]) => (
                           <div className="rounded-lg bg-black/20 px-3 py-2 text-xs" key={name}>
                             <p className="font-medium text-slate-100">{name}</p>
                             <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
                               {desc}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeFeature === "kpl" ? (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                      <p className="text-xs font-medium">发布队列</p>
+                      <div className="mt-2 space-y-2">
+                        {publishQueue.map(([time, title, artifact, status]) => (
+                          <div className="rounded-lg bg-black/20 px-3 py-2 text-xs" key={time}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-slate-100">{title}</span>
+                              <span className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-slate-300">
+                                {status}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[11px] text-slate-500">
+                              {time} / {artifact}
                             </p>
                           </div>
                         ))}
