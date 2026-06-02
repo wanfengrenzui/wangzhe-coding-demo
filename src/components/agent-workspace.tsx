@@ -602,6 +602,16 @@ function AgentModule({
   steps: AgentStep[];
   task: string;
 }) {
+  const [expandedStepIds, setExpandedStepIds] = useState<string[]>([]);
+
+  function toggleStep(stepId: string) {
+    setExpandedStepIds((current) =>
+      current.includes(stepId)
+        ? current.filter((item) => item !== stepId)
+        : [...current, stepId],
+    );
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[360px_1fr_320px]">
       <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
@@ -656,7 +666,10 @@ function AgentModule({
           </span>
         </div>
         <div className="mt-3 space-y-2">
-          {steps.map((item, index) => (
+          {steps.map((item, index) => {
+            const isExpanded = expandedStepIds.includes(item.id);
+
+            return (
             <div className={`rounded-xl border p-3 ${statusClass(item.status)}`} key={item.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3">
@@ -674,22 +687,36 @@ function AgentModule({
                     <p className="mt-0.5 text-[11px] text-slate-500">Tool: {item.tool}</p>
                   </div>
                 </div>
-                <span className="rounded-md bg-black/20 px-2 py-1 text-[11px]">
-                  {statusLabel(item.status)}
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    className="rounded-md border border-white/10 bg-black/15 px-2 py-1 text-[11px] text-slate-200 transition hover:border-emerald-300/40 hover:text-emerald-100"
+                    onClick={() => toggleStep(item.id)}
+                    type="button"
+                  >
+                    {isExpanded ? "收起" : "展开"}
+                  </button>
+                  <span className="rounded-md bg-black/20 px-2 py-1 text-[11px]">
+                    {statusLabel(item.status)}
+                  </span>
+                </div>
               </div>
               <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
                 <div>
                   <p className="text-[11px] text-slate-500">输入摘要</p>
-                  <p className="mt-1 line-clamp-2 text-slate-300">{item.input}</p>
+                  <p className={`mt-1 whitespace-pre-wrap leading-5 text-slate-300 ${isExpanded ? "" : "line-clamp-2"}`}>
+                    {item.input}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[11px] text-slate-500">输出摘要</p>
-                  <p className="mt-1 line-clamp-2 text-slate-200">{item.output}</p>
+                  <p className={`mt-1 whitespace-pre-wrap leading-5 text-slate-200 ${isExpanded ? "" : "line-clamp-2"}`}>
+                    {item.output}
+                  </p>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
