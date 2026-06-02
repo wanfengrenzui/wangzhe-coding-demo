@@ -863,6 +863,8 @@ function ContentModule({
   slices: Array<{ time: string; type: string; title: string; score: number; reason: string }>;
 }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [queuedItems, setQueuedItems] = useState(publishQueue);
+  const [regenerateCount, setRegenerateCount] = useState(0);
   const selectedSlice = slices[selectedIndex] || slices[0];
   const generatedTitle = selectedSlice
     ? `等一个${selectedSlice.type}，比赛节奏直接变天`
@@ -870,6 +872,23 @@ function ContentModule({
   const generatedScript = selectedSlice
     ? `这一波发生在 ${selectedSlice.time}。${selectedSlice.title}。从画面看，关键点不是单个击杀，而是技能链和站位同时打开，适合剪成 15 秒高光。`
     : "点击生成候选切片后，这里会自动生成解说口播。";
+
+  function addSelectedSliceToQueue() {
+    if (!selectedSlice) return;
+    const [minute = "00", second = "00"] = selectedSlice.time.split(":");
+    const endSecond = Number(second) + 15;
+    const range = `00:${minute.padStart(2, "0")}:${second.padStart(2, "0")}-00:${minute.padStart(2, "0")}:${String(endSecond).padStart(2, "0")}`;
+    const nextItem = [
+      range,
+      selectedSlice.title,
+      regenerateCount > 0 ? `标题/口播已重新生成 ${regenerateCount} 次` : "标题/口播已生成",
+      "待人工复核",
+    ];
+    setQueuedItems((current) => [
+      nextItem,
+      ...current.filter((item) => item[0] !== range),
+    ]);
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1fr_320px]">
@@ -895,6 +914,7 @@ function ContentModule({
             onClick={() => {
               generateSlices();
               setSelectedIndex(0);
+              setRegenerateCount(0);
             }}
             type="button"
           >
@@ -907,6 +927,21 @@ function ContentModule({
           >
             重置转写
           </button>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          {[
+            ["1", "视频转写", matchLog.trim() ? "已导入" : "等待"],
+            ["2", "候选切片", slices.length ? `${slices.length} 条` : "待生成"],
+            ["3", "标题口播", selectedSlice ? "已生成" : "等待"],
+            ["4", "发布队列", `${queuedItems.length} 条`],
+          ].map(([step, label, status]) => (
+            <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2" key={label}>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">{step}. {label}</span>
+                <span className="text-emerald-200">{status}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -921,7 +956,10 @@ function ContentModule({
                   : "border-white/10 bg-white/[0.035] hover:border-white/20"
               }`}
               key={`${item.time}-${item.title}`}
-              onClick={() => setSelectedIndex(index)}
+              onClick={() => {
+                setSelectedIndex(index);
+                setRegenerateCount(0);
+              }}
               type="button"
             >
               <div className="flex items-center justify-between">
@@ -946,16 +984,25 @@ function ContentModule({
           <p className="mt-3 text-xs text-slate-500">解说口播</p>
           <p className="mt-2 text-xs leading-5 text-slate-200">{generatedScript}</p>
           <div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs">
-            <button className="rounded-lg bg-emerald-300 px-2 py-2 font-semibold text-slate-950" type="button">
+            <button
+              className="rounded-lg bg-emerald-300 px-2 py-2 font-semibold text-slate-950 disabled:opacity-60"
+              disabled={!selectedSlice}
+              onClick={addSelectedSliceToQueue}
+              type="button"
+            >
               加入发布队列
             </button>
-            <button className="rounded-lg border border-white/10 px-2 py-2 text-slate-200" type="button">
+            <button
+              className="rounded-lg border border-white/10 px-2 py-2 text-slate-200"
+              onClick={() => setRegenerateCount((count) => count + 1)}
+              type="button"
+            >
               重新生成
             </button>
           </div>
         </div>
         <div className="mt-4 space-y-3">
-          {publishQueue.map(([time, title, artifact, status]) => (
+          {queuedItems.map(([time, title, artifact, status]) => (
             <div className="rounded-xl bg-white/[0.035] p-3 text-xs" key={time}>
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-slate-100">{title}</p>
