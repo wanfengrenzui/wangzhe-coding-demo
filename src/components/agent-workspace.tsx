@@ -172,72 +172,66 @@ const kplTeams = [
 
 const kplBpMatches = [
   {
-    id: "ag-wolves-g1",
-    date: "2026-06-03",
-    stage: "常规赛 S 组",
+    id: "ag-wolves-g1-real",
+    date: "2024-11-16",
+    stage: "2024 KPL ????? ??",
     game: "Game 1",
-    blueTeam: "成都 AG 超玩会",
-    redTeam: "重庆狼队",
-    result: "蓝色方胜",
-    patch: "S37 / 发育路强势版本",
-    duration: "18:42",
+    blueTeam: "?? AG ???",
+    redTeam: "????",
+    result: "AG ????",
+    patch: "?????????",
+    duration: "???????",
+    source: "??????????????????????????? AG 4:2 ????",
+    confidence: "??????????? pick ?????????/OCR ????",
+    status: "verified-lineup",
     bans: {
-      blue: ["大乔", "朵莉亚", "镜", "沈梦溪"],
-      red: ["鲁班大师", "少司缘", "戈娅", "海诺"],
+      blue: ["??", "??", "??", "???", "??"],
+      red: ["???", "???", "???", "??", "????"],
     },
     picks: [
-      { order: "B1", side: "blue", hero: "孙尚香", lane: "发育路", player: "一诺", intent: "先抢后期射核，压住对手发育路英雄池" },
-      { order: "R1", side: "red", hero: "兰陵王", lane: "打野", player: "小胖", intent: "用隐身强抓限制孙尚香发育" },
-      { order: "R2", side: "red", hero: "张飞", lane: "辅助", player: "帆帆", intent: "补前排与反开，保护刺客进场" },
-      { order: "B2", side: "blue", hero: "张良", lane: "中路", player: "长生", intent: "用稳定控制反制兰陵王进场" },
-      { order: "B3", side: "blue", hero: "廉颇", lane: "对抗路", player: "轩染", intent: "补开团和前排，给射手创造输出空间" },
-      { order: "R3", side: "red", hero: "狄仁杰", lane: "发育路", player: "妖刀", intent: "选择净化型射手，降低点控威胁" },
-      { order: "R4", side: "red", hero: "王昭君", lane: "中路", player: "向鱼", intent: "用阵地控制拖慢蓝色方推进" },
-      { order: "B4", side: "blue", hero: "赵怀真", lane: "打野", player: "钟意", intent: "补反打和保护，围绕孙尚香打前中期资源团" },
-      { order: "B5", side: "blue", hero: "太乙真人", lane: "游走", player: "大帅", intent: "提高射手容错，形成双保险体系" },
-      { order: "R5", side: "red", hero: "蒙恬", lane: "对抗路", player: "归期", intent: "补正面强开，尝试冲散蓝色方保护阵型" },
+      { order: "AG-1", side: "blue", hero: "???", lane: "??", player: "AG", intent: "??????? 1 ???????????" },
+      { order: "AG-2", side: "blue", hero: "???", lane: "???", player: "AG", intent: "??????? 2 ????????????" },
+      { order: "AG-3", side: "blue", hero: "???", lane: "??", player: "AG", intent: "??????? 3 ?????????" },
+      { order: "AG-4", side: "blue", hero: "??", lane: "???", player: "AG", intent: "??????? 4 ?????????????" },
+      { order: "AG-5", side: "blue", hero: "??", lane: "??/??", player: "AG", intent: "??????? 5 ????????????" },
+      { order: "WOL-1", side: "red", hero: "????", lane: "??", player: "??", intent: "??????? 1 ???????" },
+      { order: "WOL-2", side: "red", hero: "??", lane: "???", player: "??", intent: "??????? 2 ????????" },
+      { order: "WOL-3", side: "red", hero: "?", lane: "??", player: "??", intent: "??????? 3 ???????????" },
+      { order: "WOL-4", side: "red", hero: "??", lane: "???", player: "??", intent: "??????? 4 ?????????" },
+      { order: "WOL-5", side: "red", hero: "???", lane: "??", player: "??", intent: "??????? 5 ???????????????" },
     ],
     analysis: [
-      "蓝色方第一手锁孙尚香，说明策略是把输出核心前置，再围绕她补控制、保护和反打。",
-      "红色方 R1/R2 连续拿兰陵王和张飞，是典型的切后排加反开组合，但被 B2 张良和 B5 太乙真人限制。",
-      "蓝色方后续三手都服务于射核生存：张良控刺客，廉颇开空间，太乙提供复活容错。",
+      "AG ????????????????????????/????????????????",
+      "???????????????????????????????????????",
+      "??????? BP/???????????????????? OCR/?????? B1/R1/R2 ??????",
     ],
-    turningPoint: "04:35 第一条暴君团，蓝色方太乙保住孙尚香，张良控住兰陵王，完成一换三。",
-    tags: ["射核体系", "反刺客", "保护链", "暴君团"],
+    turningPoint: "?????AG ??????????????????????????????????",
+    tags: ["??????", "BP ??", "???????", "?????"],
+    sourceLinks: [
+      "https://kpl.wanplus.cn/schedule/83028.html",
+      "https://www.qieyou.com/content/111084",
+      "https://slide.sports.sina.com.cn/o/slide_2_730_301154.html",
+    ],
   },
   {
-    id: "estar-wb-g2",
-    date: "2026-06-04",
-    stage: "季后赛胜者组",
-    game: "Game 2",
-    blueTeam: "武汉 eStarPro",
-    redTeam: "北京 WB",
-    result: "红色方胜",
-    patch: "S37 / 中野节奏版本",
-    duration: "21:06",
-    bans: {
-      blue: ["鲁班大师", "镜", "不知火舞", "戈娅"],
-      red: ["大乔", "朵莉亚", "海诺", "孙膑"],
-    },
-    picks: [
-      { order: "B1", side: "blue", hero: "夏侯惇", lane: "对抗路", player: "坦然", intent: "先拿万金油前排，保证阵容下限" },
-      { order: "R1", side: "red", hero: "公孙离", lane: "发育路", player: "乔兮", intent: "优先拿高机动射手，争取线权" },
-      { order: "R2", side: "red", hero: "弈星", lane: "中路", player: "花卷", intent: "配合公孙离打中期控图和框人" },
-      { order: "B2", side: "blue", hero: "澜", lane: "打野", player: "花海", intent: "补收割能力，针对公孙离位移后真空期" },
-      { order: "B3", side: "blue", hero: "沈梦溪", lane: "中路", player: "清融", intent: "远程消耗，压低红色方进场血量" },
-      { order: "R3", side: "red", hero: "苏烈", lane: "游走", player: "星宇", intent: "补强开和前排，提升先手能力" },
-      { order: "R4", side: "red", hero: "铠", lane: "打野", player: "暖阳", intent: "用单点突进威胁沈梦溪与后排" },
-      { order: "B4", side: "blue", hero: "虞姬", lane: "发育路", player: "易峥", intent: "用物免自保，降低铠的单切收益" },
-      { order: "B5", side: "blue", hero: "张飞", lane: "游走", player: "子阳", intent: "补保护和反开" },
-      { order: "R5", side: "red", hero: "狂铁", lane: "对抗路", player: "梓墨", intent: "提升边路压制和龙坑正面强度" },
-    ],
-    analysis: [
-      "红色方 R1/R2 先定公孙离加弈星，意图是用机动射手和团控法师掌握中期节奏。",
-      "蓝色方 B2/B3 用澜和沈梦溪回应，思路是消耗后收割，但缺少稳定先手。",
-      "红色方 R3-R5 连续补强开、突进和边路强度，阵容主动性明显更高。",
-    ],
-    turningPoint: "10:20 红色方弈星框住双 C，苏烈接闪开团，直接反推中一塔。",
-    tags: ["中野节奏", "强开体系", "控图", "射手线权"],
+    id: "future-import-placeholder",
+    date: "???",
+    stage: "KPL ???",
+    game: "??????",
+    blueTeam: "???",
+    redTeam: "???",
+    result: "???",
+    patch: "?????",
+    duration: "???",
+    source: "???? KPL ??/OCR/????",
+    confidence: "????????????????",
+    status: "placeholder",
+    bans: { blue: ["???"], red: ["???"] },
+    picks: [],
+    analysis: ["??????????????? BP?????????? RAG ?????"],
+    turningPoint: "???????????",
+    tags: ["???", "?? OCR", "ASR ??"],
+    sourceLinks: [],
   },
 ];
 
@@ -826,218 +820,193 @@ function KplBpModule() {
     kplBpMatches.find((match) => match.id === selectedMatchId) || kplBpMatches[0];
   const bluePicks = selectedMatch.picks.filter((pick) => pick.side === "blue");
   const redPicks = selectedMatch.picks.filter((pick) => pick.side === "red");
+  const pickRows = Array.from({ length: Math.max(bluePicks.length, redPicks.length, 5) }, (_, index) => ({
+    blue: bluePicks[index],
+    red: redPicks[index],
+  }));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr_360px]">
-      <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
-            <h3 className="text-lg font-semibold">比赛 BP 数据库</h3>
-            <p className="mt-1 text-xs text-slate-500">Match draft database</p>
+    <div className="mx-auto aspect-video max-h-[calc(100vh-120px)] w-full max-w-[1480px] overflow-hidden rounded-2xl border border-white/10 bg-[#081019] p-4">
+      <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[260px_1fr_330px]">
+        <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+          <div className="border-b border-white/10 pb-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">KPL Database</p>
+            <h3 className="mt-1 text-lg font-semibold">??????</h3>
+            <p className="mt-1 text-xs text-slate-500">???????????</p>
           </div>
-          <span className="rounded-md bg-emerald-300/15 px-2 py-1 text-xs text-emerald-100">
-            {kplBpMatches.length} 场
-          </span>
-        </div>
 
-        <div className="mt-4 space-y-3">
-          {kplBpMatches.map((match) => (
-            <button
-              className={`w-full rounded-xl border p-3 text-left transition ${
-                selectedMatch.id === match.id
-                  ? "border-emerald-300/50 bg-emerald-300/10"
-                  : "border-white/10 bg-white/[0.035] hover:border-white/20"
-              }`}
-              key={match.id}
-              onClick={() => setSelectedMatchId(match.id)}
-              type="button"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-100">{match.game}</p>
-                <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-slate-300">
-                  {match.result}
-                </span>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-slate-300">
-                {match.blueTeam} vs {match.redTeam}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500">
-                {match.date} / {match.stage} / {match.duration}
-              </p>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
-          <p className="text-xs font-semibold text-slate-200">可入库字段</p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-            {[
-              "match_id",
-              "game_no",
-              "patch",
-              "side",
-              "pick_order",
-              "hero",
-              "lane",
-              "player",
-              "ban",
-              "draft_intent",
-            ].map((field) => (
-              <span className="rounded-md bg-white/[0.04] px-2 py-1" key={field}>
-                {field}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">
-              Draft Timeline
-            </p>
-            <h3 className="mt-1 text-xl font-semibold">
-              {selectedMatch.blueTeam} vs {selectedMatch.redTeam}
-            </h3>
-            <p className="mt-2 text-xs text-slate-500">
-              {selectedMatch.stage} / {selectedMatch.patch} / {selectedMatch.result}
-            </p>
-          </div>
-          <span className="rounded-md bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">
-            完整 BP
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-sky-100">蓝色方 Ban</p>
-              <span className="text-xs text-slate-500">{selectedMatch.blueTeam}</span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {selectedMatch.bans.blue.map((hero) => (
-                <span className="rounded-lg border border-sky-300/20 px-2 py-1 text-xs" key={hero}>
-                  {hero}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl border border-rose-300/20 bg-rose-300/8 p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-rose-100">红色方 Ban</p>
-              <span className="text-xs text-slate-500">{selectedMatch.redTeam}</span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {selectedMatch.bans.red.map((hero) => (
-                <span className="rounded-lg border border-rose-300/20 px-2 py-1 text-xs" key={hero}>
-                  {hero}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {selectedMatch.picks.map((pick) => (
-            <div
-              className={`rounded-xl border p-3 ${
-                pick.side === "blue"
-                  ? "border-sky-300/25 bg-sky-300/8"
-                  : "border-rose-300/25 bg-rose-300/8"
-              }`}
-              key={`${selectedMatch.id}-${pick.order}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
-                      pick.side === "blue" ? "bg-sky-300 text-slate-950" : "bg-rose-300 text-slate-950"
-                    }`}
-                  >
-                    {pick.order}
+          <div className="mt-3 space-y-2 overflow-y-auto pr-1">
+            {kplBpMatches.map((match) => (
+              <button
+                className={
+                  "w-full rounded-xl border p-3 text-left transition " +
+                  (selectedMatch.id === match.id
+                    ? "border-emerald-300/50 bg-emerald-300/10"
+                    : "border-white/10 bg-white/[0.035] hover:border-white/20")
+                }
+                key={match.id}
+                onClick={() => setSelectedMatchId(match.id)}
+                type="button"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">{match.game}</p>
+                  <span className="rounded-md bg-black/20 px-2 py-1 text-[10px] text-slate-300">
+                    {match.status === "verified-lineup" ? "??" : "??"}
                   </span>
-                  <div>
-                    <p className="text-base font-semibold">{pick.hero}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {pick.lane} / {pick.player}
-                    </p>
-                  </div>
                 </div>
-                <span className="rounded-md bg-black/20 px-2 py-1 text-[11px] text-slate-300">
-                  {pick.side === "blue" ? "蓝色方" : "红色方"}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{pick.intent}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+                <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">
+                  {match.blueTeam} vs {match.redTeam}
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">{match.date}</p>
+              </button>
+            ))}
+          </div>
 
-      <section className="rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-        <h3 className="text-lg font-semibold">阵容与 BP 思路</h3>
-
-        <div className="mt-4 grid gap-3">
-          <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
-            <p className="text-sm font-semibold text-sky-100">蓝色方阵容</p>
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              {bluePicks.map((pick) => (
-                <div className="flex items-center justify-between rounded-lg bg-black/20 px-3 py-2 text-xs" key={pick.order}>
-                  <span>{pick.lane}</span>
-                  <strong>{pick.hero}</strong>
-                </div>
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+            <p className="text-xs font-semibold text-slate-200">????</p>
+            <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px] text-slate-400">
+              {["match_id", "source", "ban", "pick", "side", "hero", "lane", "confidence"].map((field) => (
+                <span className="rounded-md bg-white/[0.04] px-2 py-1" key={field}>{field}</span>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="rounded-xl border border-rose-300/20 bg-rose-300/8 p-3">
-            <p className="text-sm font-semibold text-rose-100">红色方阵容</p>
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              {redPicks.map((pick) => (
-                <div className="flex items-center justify-between rounded-lg bg-black/20 px-3 py-2 text-xs" key={pick.order}>
-                  <span>{pick.lane}</span>
-                  <strong>{pick.hero}</strong>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
-          <p className="text-sm font-semibold text-emerald-100">BP 复盘结论</p>
-          <div className="mt-3 space-y-2">
-            {selectedMatch.analysis.map((item) => (
-              <p className="rounded-lg bg-black/20 p-2 text-xs leading-5 text-slate-300" key={item}>
-                {item}
+        <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+          <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">16:9 Draft Board</p>
+              <h3 className="mt-1 text-xl font-semibold">{selectedMatch.blueTeam} vs {selectedMatch.redTeam}</h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {selectedMatch.stage} / {selectedMatch.result}
               </p>
+            </div>
+            <span className="max-w-[280px] rounded-md bg-white/[0.06] px-3 py-1.5 text-right text-xs text-slate-300">
+              {selectedMatch.confidence}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-sky-100">AG Ban</p>
+                <span className="text-[11px] text-slate-500">????</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {selectedMatch.bans.blue.map((hero) => (
+                  <span className="rounded-md border border-sky-300/20 px-2 py-1 text-[11px]" key={hero}>{hero}</span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-rose-300/20 bg-rose-300/8 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-rose-100">?? Ban</p>
+                <span className="text-[11px] text-slate-500">????</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {selectedMatch.bans.red.map((hero) => (
+                  <span className="rounded-md border border-rose-300/20 px-2 py-1 text-[11px]" key={hero}>{hero}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 grid min-h-0 flex-1 grid-rows-5 gap-2 overflow-hidden">
+            {pickRows.map(({ blue, red }, index) => (
+              <div className="grid min-h-0 grid-cols-[1fr_56px_1fr] items-stretch gap-2" key={index}>
+                <PickCell pick={blue} side="blue" fallback={"AG " + (index + 1)} />
+                <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/20 text-xs font-semibold text-slate-400">
+                  P{index + 1}
+                </div>
+                <PickCell pick={red} side="red" fallback={"WOL " + (index + 1)} />
+              </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.035] p-3">
-          <p className="text-xs text-slate-500">关键胜负手</p>
-          <p className="mt-2 text-sm leading-6 text-slate-200">{selectedMatch.turningPoint}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {selectedMatch.tags.map((tag) => (
-              <span className="rounded-md border border-white/10 px-2 py-1 text-xs text-emerald-100" key={tag}>
-                {tag}
-              </span>
+        <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
+          <h3 className="text-lg font-semibold">????</h3>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <MiniRoster title="AG ??" picks={bluePicks} tone="blue" />
+            <MiniRoster title="????" picks={redPicks} tone="red" />
+          </div>
+
+          <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
+            <p className="text-sm font-semibold text-emerald-100">??????</p>
+            <p className="mt-2 text-xs leading-5 text-slate-300">{selectedMatch.source}</p>
+            <p className="mt-2 text-[11px] leading-5 text-amber-100">{selectedMatch.confidence}</p>
+          </div>
+
+          <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            {selectedMatch.analysis.map((item) => (
+              <p className="rounded-lg bg-black/20 p-2 text-xs leading-5 text-slate-300" key={item}>{item}</p>
             ))}
           </div>
-        </div>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
-          <p className="text-xs font-semibold text-slate-200">后续可接 AI 能力</p>
-          <div className="mt-3 space-y-2 text-xs text-slate-400">
-            <p>1. 自动抽取解说中的 BP 评价，补充 draft_intent。</p>
-            <p>2. 基于阵容标签检索相似比赛，给出胜率和反制建议。</p>
-            <p>3. 把 BP 时间线作为 RAG chunk，回答“为什么一选射手”。</p>
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
+            <p className="text-xs text-slate-500">??? / ????</p>
+            <p className="mt-2 text-xs leading-5 text-slate-200">{selectedMatch.turningPoint}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {selectedMatch.tags.map((tag) => (
+                <span className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-emerald-100" key={tag}>{tag}</span>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
+
+function PickCell({
+  fallback,
+  pick,
+  side,
+}: {
+  fallback: string;
+  pick?: { order: string; side: string; hero: string; lane: string; player: string; intent: string };
+  side: "blue" | "red";
+}) {
+  const isBlue = side === "blue";
+
+  return (
+    <div className={"min-h-0 rounded-xl border p-2 " + (isBlue ? "border-sky-300/25 bg-sky-300/8" : "border-rose-300/25 bg-rose-300/8")}>
+      <div className="flex items-center justify-between gap-2">
+        <span className={"rounded-md px-2 py-1 text-[11px] font-semibold " + (isBlue ? "bg-sky-300 text-slate-950" : "bg-rose-300 text-slate-950")}>
+          {pick?.order || fallback}
+        </span>
+        <span className="text-[10px] text-slate-500">{pick?.lane || "???"}</span>
+      </div>
+      <p className="mt-1 truncate text-sm font-semibold">{pick?.hero || "???"}</p>
+      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">{pick?.intent || "???? OCR / ???????"}</p>
+    </div>
+  );
+}
+
+function MiniRoster({
+  picks,
+  title,
+  tone,
+}: {
+  picks: Array<{ order: string; side: string; hero: string; lane: string; player: string; intent: string }>;
+  title: string;
+  tone: "blue" | "red";
+}) {
+  return (
+    <div className={"rounded-xl border p-3 " + (tone === "blue" ? "border-sky-300/20 bg-sky-300/8" : "border-rose-300/20 bg-rose-300/8")}>
+      <p className="text-xs font-semibold text-slate-200">{title}</p>
+      <div className="mt-2 space-y-1.5">
+        {picks.length ? picks.map((pick) => (
+          <div className="flex items-center justify-between rounded-md bg-black/20 px-2 py-1.5 text-[11px]" key={pick.order}>
+            <span className="text-slate-500">{pick.lane}</span>
+            <strong>{pick.hero}</strong>
+          </div>
+        )) : <p className="text-[11px] text-slate-500">???</p>}
+      </div>
+    </div>
+  );
+}
+
 
 function KplModule() {
   return (
