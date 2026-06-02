@@ -30,6 +30,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 import type { IntentResult } from "@/lib/intent";
+import { currentKplBpMatches, type KplPick } from "@/lib/kpl-bp-data";
 import type { KnowledgeResult } from "@/lib/knowledge";
 
 type FeatureKey =
@@ -214,6 +215,129 @@ const kplBpMatches = [
     ],
   },
   {
+    id: "ag-wolves-g2-report",
+    date: "2024-11-16",
+    stage: "2024 KPL \u5e74\u5ea6\u603b\u51b3\u8d5b \u51b3\u8d5b",
+    game: "Game 2",
+    blueTeam: "\u6210\u90fd AG \u8d85\u73a9\u4f1a",
+    redTeam: "\u91cd\u5e86\u72fc\u961f",
+    result: "AG \u518d\u4e0b\u4e00\u57ce",
+    patch: "\u516c\u5f00\u6218\u62a5\u672a\u6807\u660e\u7248\u672c",
+    duration: "\u516c\u5f00\u6218\u62a5\u672a\u62ab\u9732",
+    source: "\u5207\u6e38\u7f51 111085 \u6218\u62a5\u63d0\u4f9b BP \u548c\u9009\u4eba\uff1b\u73a9\u52a0\u8d5b\u7a0b\u9875\u786e\u8ba4\u5206\u5c40\u80dc\u8d1f",
+    confidence: "\u9635\u5bb9\u5df2\u67e5\u516c\u5f00\u6218\u62a5\uff1b\u9010\u624b pick \u987a\u5e8f\u9700\u89c6\u9891/OCR \u6821\u51c6",
+    status: "verified-lineup",
+    bans: {
+      blue: ["\u9c81\u73ed\u5927\u5e08", "\u50b2\u9690", "\u5f20\u826f", "\u8521\u6587\u59ec", "\u949f\u9997"],
+      red: ["\u5b59\u5c1a\u9999", "\u738b\u662d\u541b", "\u66f9\u64cd", "\u5c11\u53f8\u7f18", "\u5173\u7fbd"],
+    },
+    picks: [
+      { order: "AG-1", side: "blue", hero: "\u5927\u4e54", lane: "\u6e38\u8d70", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u8f6c\u7ebf\u4f53\u7cfb\u6838\u5fc3" },
+      { order: "AG-2", side: "blue", hero: "\u72c4\u4ec1\u6770", lane: "\u53d1\u80b2\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u7a33\u5b9a\u5bf9\u7ebf\u548c\u6301\u7eed\u8f93\u51fa" },
+      { order: "AG-3", side: "blue", hero: "\u5143\u6d41\u4e4b\u5b50", lane: "\u6253\u91ce/\u8fb9\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u7075\u6d3b\u8865\u4f4d\u4e0e\u8282\u594f\u8865\u5f3a" },
+      { order: "AG-4", side: "blue", hero: "\u590f\u6d1b\u7279", lane: "\u5bf9\u6297\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u5355\u5e26\u4e0e\u524d\u6392\u538b\u529b" },
+      { order: "AG-5", side: "blue", hero: "\u5b34\u653f", lane: "\u4e2d\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u8fdc\u7a0b\u6e05\u7ebf\u4e0e\u538b\u5854" },
+      { order: "WOL-1", side: "red", hero: "\u5b89\u742a\u62c9", lane: "\u4e2d\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u63a7\u5236\u7206\u53d1\u5f00\u7a97" },
+      { order: "WOL-2", side: "red", hero: "\u5927\u53f8\u547d", lane: "\u6253\u91ce", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u91ce\u533a\u8282\u594f\u4e0e\u6536\u5272" },
+      { order: "WOL-3", side: "red", hero: "\u4f3d\u7f57", lane: "\u53d1\u80b2\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u540e\u671f\u957f\u624b\u8f93\u51fa" },
+      { order: "WOL-4", side: "red", hero: "\u5ec9\u9887", lane: "\u6e38\u8d70/\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u524d\u6392\u548c\u5f00\u56e2" },
+      { order: "WOL-5", side: "red", hero: "\u8499\u606c", lane: "\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u6b63\u9762\u9635\u5730\u6218\u5f3a\u5ea6" },
+    ],
+    analysis: [
+      "AG \u62ff\u5230\u5927\u4e54+\u72c4\u4ec1\u6770+\u5b34\u653f\uff0c\u4f53\u7cfb\u66f4\u504f\u8f6c\u7ebf\u3001\u538b\u5854\u548c\u7a33\u5b9a\u62c9\u626f\u3002",
+      "\u72fc\u961f\u9635\u5bb9\u4f9d\u8d56\u5b89\u742a\u62c9\u5148\u624b\u548c\u4f3d\u7f57\u540e\u671f\u8f93\u51fa\uff0c\u9700\u8981\u524d\u6392\u7ad9\u4f4f\u6b63\u9762\u6218\u573a\u3002",
+      "\u62a5\u9053\u63d0\u5230 AG \u4e2d\u540e\u6bb5\u56e2\u6218\u53d1\u529b\u7ed3\u675f\u6bd4\u8d5b\uff0c\u53ef\u4f5c\u4e3a\u8d5b\u51b5\u8bed\u6599\u5165\u5e93\u3002",
+    ],
+    turningPoint: "\u5207\u6e38\u6218\u62a5\u8bb0\u5f55\uff1a\u5341\u4e94\u5206\u949f AG \u53d1\u529b\u56e2\u706d\u72fc\u961f\u540e\u7ed3\u675f\u6bd4\u8d5b\u3002",
+    tags: ["\u771f\u5b9e\u516c\u5f00\u6765\u6e90", "BP \u9635\u5bb9", "\u5f85\u6821\u51c6\u9010\u624b\u987a\u5e8f", "Game 2"],
+    sourceLinks: [
+      "https://www.wanplus.cn/schedule/86638.html",
+      "https://www.qieyou.com/content/111085",
+    ],
+  },
+  {
+    id: "ag-wolves-g3-report",
+    date: "2024-11-16",
+    stage: "2024 KPL \u5e74\u5ea6\u603b\u51b3\u8d5b \u51b3\u8d5b",
+    game: "Game 3",
+    blueTeam: "\u6210\u90fd AG \u8d85\u73a9\u4f1a",
+    redTeam: "\u91cd\u5e86\u72fc\u961f",
+    result: "\u72fc\u961f\u6273\u56de\u4e00\u5c40",
+    patch: "\u516c\u5f00\u6218\u62a5\u672a\u6807\u660e\u7248\u672c",
+    duration: "\u516c\u5f00\u6218\u62a5\u672a\u62ab\u9732",
+    source: "\u5207\u6e38\u7f51 111086 \u6218\u62a5\u63d0\u4f9b BP \u548c\u9009\u4eba\uff1b\u73a9\u52a0\u8d5b\u7a0b\u9875\u786e\u8ba4\u5206\u5c40\u80dc\u8d1f",
+    confidence: "\u9635\u5bb9\u5df2\u67e5\u516c\u5f00\u6218\u62a5\uff1b\u9010\u624b pick \u987a\u5e8f\u9700\u89c6\u9891/OCR \u6821\u51c6",
+    status: "verified-lineup",
+    bans: {
+      blue: ["\u9c81\u73ed\u5927\u5e08", "\u5173\u7fbd", "\u50b2\u9690", "\u590f\u6d1b\u7279", "\u72c4\u4ec1\u6770"],
+      red: ["\u5b59\u5c1a\u9999", "\u5c11\u53f8\u7f18", "\u5927\u53f8\u547d", "\u955c", "\u6768\u7389\u73af"],
+    },
+    picks: [
+      { order: "AG-1", side: "blue", hero: "\u738b\u662d\u541b", lane: "\u4e2d\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u5206\u5272\u5730\u5f62\u4e0e\u9635\u5730\u63a7\u573a" },
+      { order: "AG-2", side: "blue", hero: "\u592a\u4e59\u771f\u4eba", lane: "\u6e38\u8d70", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u4fdd\u6838\u548c\u590d\u6d3b\u5bb9\u9519" },
+      { order: "AG-3", side: "blue", hero: "\u6208\u5a05", lane: "\u53d1\u80b2\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u673a\u52a8\u62c9\u626f\u8f93\u51fa" },
+      { order: "AG-4", side: "blue", hero: "\u9a6c\u8d85", lane: "\u5bf9\u6297\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u8fb9\u8def\u7a81\u8fdb\u4e0e\u6536\u5272" },
+      { order: "AG-5", side: "blue", hero: "\u963f\u53e4\u6735", lane: "\u6253\u91ce", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u91ce\u533a\u63a7\u56fe\u548c\u63a8\u8fdb" },
+      { order: "WOL-1", side: "red", hero: "\u5f20\u826f", lane: "\u4e2d\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u70b9\u63a7\u514b\u5236\u7a81\u8fdb" },
+      { order: "WOL-2", side: "red", hero: "\u590f\u4faf\u60c7", lane: "\u6e38\u8d70/\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u524d\u6392\u4e0e\u5148\u624b\u63a7\u5236" },
+      { order: "WOL-3", side: "red", hero: "\u5e72\u5c06\u83ab\u90aa", lane: "\u4e2d\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u8fdc\u7a0b poke \u548c\u538b\u8840\u7ebf" },
+      { order: "WOL-4", side: "red", hero: "\u66f9\u64cd", lane: "\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u7eed\u822a\u8fdb\u573a\u4e0e\u6b63\u9762\u538b\u529b" },
+      { order: "WOL-5", side: "red", hero: "\u674e\u5143\u82b3", lane: "\u53d1\u80b2\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u63a8\u8fdb\u548c\u7206\u53d1\u70b9\u6740" },
+    ],
+    analysis: [
+      "AG \u9635\u5bb9\u6709\u738b\u662d\u541b\u63a7\u573a\u548c\u592a\u4e59\u4fdd\u6838\uff0c\u4f46\u9700\u8981\u6208\u5a05/\u9a6c\u8d85\u5b89\u5168\u53d1\u80b2\u5230\u4f24\u5bb3\u7a97\u53e3\u3002",
+      "\u72fc\u961f\u5f20\u826f+\u5e72\u5c06\u83ab\u90aa\u7684\u4e2d\u8def\u7ec4\u5408\u63d0\u4f9b\u70b9\u63a7\u548c\u8fdc\u7a0b\u538b\u8840\uff0c\u524d\u4e2d\u671f\u80fd\u66f4\u5feb\u6253\u51fa\u8282\u594f\u3002",
+      "\u62a5\u9053\u8bb0\u5f55\u72fc\u961f\u5341\u4e09\u5206\u949f\u56e2\u706d AG \u7ed3\u675f\u6bd4\u8d5b\uff0c\u662f\u672c\u5c40\u5173\u952e\u80dc\u8d1f\u624b\u3002",
+    ],
+    turningPoint: "\u5207\u6e38\u6218\u62a5\u8bb0\u5f55\uff1a\u5341\u4e09\u5206\u949f\u72fc\u961f\u518d\u6b21\u56e2\u706d AG\uff0c\u76f4\u63a5\u7ed3\u675f\u6bd4\u8d5b\u3002",
+    tags: ["\u771f\u5b9e\u516c\u5f00\u6765\u6e90", "BP \u9635\u5bb9", "\u5f85\u6821\u51c6\u9010\u624b\u987a\u5e8f", "Game 3"],
+    sourceLinks: [
+      "https://www.wanplus.cn/schedule/86638.html",
+      "https://www.qieyou.com/content/111086",
+    ],
+  },
+  {
+    id: "ag-wolves-g4-report",
+    date: "2024-11-16",
+    stage: "2024 KPL \u5e74\u5ea6\u603b\u51b3\u8d5b \u51b3\u8d5b",
+    game: "Game 4",
+    blueTeam: "\u6210\u90fd AG \u8d85\u73a9\u4f1a",
+    redTeam: "\u91cd\u5e86\u72fc\u961f",
+    result: "\u72fc\u961f\u8ffd\u5e73\u5927\u6bd4\u5206",
+    patch: "\u516c\u5f00\u6218\u62a5\u672a\u6807\u660e\u7248\u672c",
+    duration: "\u516c\u5f00\u6218\u62a5\u672a\u62ab\u9732",
+    source: "\u5207\u6e38\u7f51 111087 \u6218\u62a5\u63d0\u4f9b BP \u548c\u9009\u4eba\uff1b\u539f\u6587\u5b58\u5728\u4e2a\u522b\u82f1\u96c4\u540d\u5b57\u7b14\u8bef\uff0c\u5df2\u6309\u738b\u8005\u82f1\u96c4\u540d\u89c4\u8303\u5316",
+    confidence: "\u9635\u5bb9\u6765\u81ea\u516c\u5f00\u6218\u62a5\uff1b\u300c\u540e\u88d4\u300d\u6309\u300c\u540e\u7fbf\u300d\u3001\u300c\u5173\u4e8e\u300d\u6309\u300c\u5173\u7fbd\u300d\u6821\u6b63\uff1b\u9010\u624b\u987a\u5e8f\u5f85 OCR",
+    status: "verified-lineup",
+    bans: {
+      blue: ["\u50b2\u9690", "\u4e0d\u77e5\u706b\u821e", "\u590f\u6d1b\u7279", "\u9a6c\u8d85", "\u5f71"],
+      red: ["\u6c88\u68a6\u6eaa", "\u5e72\u5c06\u83ab\u90aa", "\u9a6c\u53ef\u6ce2\u7f57", "\u540e\u7fbf", "\u767e\u91cc\u5b88\u7ea6"],
+    },
+    picks: [
+      { order: "AG-1", side: "blue", hero: "\u5f20\u98de", lane: "\u6e38\u8d70", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u5f00\u56e2\u548c\u4fdd\u62a4\u524d\u6392" },
+      { order: "AG-2", side: "blue", hero: "\u955c", lane: "\u6253\u91ce", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u91ce\u533a\u8282\u594f\u548c\u5207\u540e" },
+      { order: "AG-3", side: "blue", hero: "\u897f\u65bd", lane: "\u4e2d\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u62c9\u4eba\u5f00\u8282\u594f" },
+      { order: "AG-4", side: "blue", hero: "\u674e\u5143\u82b3", lane: "\u53d1\u80b2\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u63a8\u8fdb\u4e0e\u7206\u53d1\u8f93\u51fa" },
+      { order: "AG-5", side: "blue", hero: "\u4e9a\u8fde", lane: "\u5bf9\u6297\u8def", player: "AG", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u6301\u7eed\u8fdb\u573a\u548c\u5355\u70b9\u538b\u529b" },
+      { order: "WOL-1", side: "red", hero: "\u9c81\u73ed\u5927\u5e08", lane: "\u6e38\u8d70", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u5f00\u56e2\u548c\u4fdd\u62a4\u6838\u5fc3" },
+      { order: "WOL-2", side: "red", hero: "\u9c81\u73ed\u4e03\u53f7", lane: "\u53d1\u80b2\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u540e\u671f\u70b9\u5c04\u6838\u5fc3" },
+      { order: "WOL-3", side: "red", hero: "\u5178\u97e6", lane: "\u6253\u91ce/\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u8fd1\u8eab\u53cd\u6253\u548c\u6536\u5272" },
+      { order: "WOL-4", side: "red", hero: "\u5173\u7fbd", lane: "\u5bf9\u6297\u8def", player: "\u72fc\u961f", intent: "\u539f\u6587\u5199\u4f5c\u300c\u5173\u4e8e\u300d\uff0c\u6309\u82f1\u96c4\u540d\u89c4\u8303\u4e3a\u5173\u7fbd\uff1b\u7ed5\u540e\u5207\u5165\u548c\u63a7\u573a" },
+      { order: "WOL-5", side: "red", hero: "\u6768\u7389\u73af", lane: "\u4e2d\u8def", player: "\u72fc\u961f", intent: "\u6765\u6e90\u9009\u4eba\u5217\u8868\uff1b\u56e2\u961f\u7eed\u822a\u548c\u62c9\u626f" },
+    ],
+    analysis: [
+      "AG \u62ff\u5230\u955c+\u897f\u65bd+\u674e\u5143\u82b3\uff0c\u524d\u4e2d\u671f\u6709\u5f88\u5f3a\u7684\u627e\u4eba\u548c\u63a8\u8fdb\u80fd\u529b\u3002",
+      "\u72fc\u961f\u9c81\u73ed\u5927\u5e08+\u9c81\u73ed\u4e03\u53f7\u7ec4\u5408\u4fdd\u969c\u540e\u671f\u8f93\u51fa\uff0c\u5173\u7fbd\u548c\u5178\u97e6\u63d0\u4f9b\u4fa7\u7ffc\u538b\u529b\u3002",
+      "\u539f\u6587\u300c\u540e\u88d4\u300d\u300c\u5173\u4e8e\u300d\u5e94\u4e3a\u7b14\u8bef\uff0c\u5165\u5e93\u65f6\u9700\u540c\u65f6\u4fdd\u7559 raw_text \u548c normalized_hero\u3002",
+    ],
+    turningPoint: "\u5207\u6e38\u6218\u62a5\u8bb0\u5f55\uff1a\u5341\u516d\u5206\u949f\u540e\u72fc\u961f\u4f9d\u9760\u9c81\u73ed\u8f93\u51fa\u8fde\u7eed\u6253\u8d62\u56e2\u6218\uff0c\u4e8c\u5341\u4e00\u5206\u949f\u62ff\u4e0b\u6bd4\u8d5b\u3002",
+    tags: ["\u771f\u5b9e\u516c\u5f00\u6765\u6e90", "BP \u9635\u5bb9", "\u539f\u6587\u7b14\u8bef\u5df2\u6807\u6ce8", "\u5f85\u6821\u51c6\u9010\u624b\u987a\u5e8f"],
+    sourceLinks: [
+      "https://www.wanplus.cn/schedule/86638.html",
+      "https://www.qieyou.com/content/111087",
+    ],
+  },
+  {
     id: "future-import-placeholder",
     date: "TBD",
     stage: "KPL Match DB",
@@ -232,6 +356,123 @@ const kplBpMatches = [
     turningPoint: "Pending video import.",
     tags: ["pending", "video OCR", "ASR report"],
     sourceLinks: [],
+  },
+];
+
+const legacyKplBpMatches = [
+  {
+    id: "2026-spring-wolves-ag-g1",
+    date: "2026-03-21",
+    stage: "2026 KPL 春季赛常规赛",
+    game: "Game 1",
+    blueTeam: "重庆狼队",
+    redTeam: "成都 AG 超玩会",
+    result: "狼队先下一城",
+    patch: "公开帖未标明版本",
+    duration: "公开帖未披露",
+    source: "虎扑赛后帖整理 2026 KPL 春季赛常规赛狼队 3:0 AG，正文列出三局 Ban/Pick。",
+    confidence: "2026 公开赛后帖可确认阵容级 BP；逐手 pick 顺序仍需比赛视频/OCR 校准。",
+    status: "verified-lineup",
+    bans: {
+      blue: ["影", "鲁班大师", "海月", "元流之子（坦克）", "杨玉环"],
+      red: ["曹操", "少司缘", "张飞", "阿古朵", "嫦娥"],
+    },
+    picks: [
+      { order: "WOL-1", side: "blue", hero: "马超", lane: "对抗路", player: "狼队", intent: "来源 Pick 列表第 1 位；边路机动突进与收割。" },
+      { order: "WOL-2", side: "blue", hero: "西施", lane: "中路", player: "狼队", intent: "来源 Pick 列表第 2 位；拉人开节奏，配合边野找机会。" },
+      { order: "WOL-3", side: "blue", hero: "夏侯惇", lane: "打野/前排", player: "狼队", intent: "来源 Pick 列表第 3 位；前排控制和野区对抗。" },
+      { order: "WOL-4", side: "blue", hero: "莱西奥", lane: "发育路", player: "狼队", intent: "来源 Pick 列表第 4 位；团战持续输出和高地处理。" },
+      { order: "WOL-5", side: "blue", hero: "朵莉亚", lane: "游走", player: "狼队", intent: "来源 Pick 列表第 5 位；刷新关键技能，提高团战上限。" },
+      { order: "AG-1", side: "red", hero: "达摩", lane: "对抗路", player: "AG", intent: "来源 Pick 列表第 1 位；地形开团和侧翼威胁。" },
+      { order: "AG-2", side: "red", hero: "梦奇", lane: "打野/边路", player: "AG", intent: "来源 Pick 列表第 2 位；正面承伤与持续输出。" },
+      { order: "AG-3", side: "red", hero: "王昭君", lane: "中路", player: "AG", intent: "来源 Pick 列表第 3 位；阵地控制和守区能力。" },
+      { order: "AG-4", side: "red", hero: "公孙离", lane: "发育路", player: "AG", intent: "来源 Pick 列表第 4 位；机动输出和拉扯。" },
+      { order: "AG-5", side: "red", hero: "太乙真人", lane: "游走", player: "AG", intent: "来源 Pick 列表第 5 位；保核复活和经济加速。" },
+    ],
+    analysis: [
+      "狼队首局拿到马超、西施、夏侯惇的主动找人组合，侧翼和中路控制都有先手窗口。",
+      "AG 使用公孙离+太乙真人保核，同时用王昭君守阵地，团战更依赖拉扯和反打。",
+      "公开来源只有最终 Ban/Pick 集合，不能直接视作真实 B1/R1/R2 顺序。",
+    ],
+    turningPoint: "公开帖赛况记录：狼队首局击败 AG，作为 3:0 系列赛开局。",
+    tags: ["2026 KPL", "春季赛常规赛", "阵容级 BP", "待校准逐手顺序"],
+    sourceLinks: ["https://bbs.hupu.com/638025067.html"],
+  },
+  {
+    id: "2026-spring-wolves-ag-g2",
+    date: "2026-03-21",
+    stage: "2026 KPL 春季赛常规赛",
+    game: "Game 2",
+    blueTeam: "成都 AG 超玩会",
+    redTeam: "重庆狼队",
+    result: "狼队再下一城",
+    patch: "公开帖未标明版本",
+    duration: "公开帖未披露",
+    source: "虎扑赛后帖整理 2026 KPL 春季赛常规赛狼队 3:0 AG，正文列出三局 Ban/Pick。",
+    confidence: "2026 公开赛后帖可确认阵容级 BP；逐手 pick 顺序仍需比赛视频/OCR 校准。",
+    status: "verified-lineup",
+    bans: {
+      blue: ["孙尚香", "鲁班大师", "裴擒虎", "露娜", "杨玉环"],
+      red: ["影", "少司缘", "元流之子（坦克）", "牛魔", "张飞"],
+    },
+    picks: [
+      { order: "AG-1", side: "blue", hero: "达摩", lane: "对抗路", player: "AG", intent: "来源 Pick 列表第 1 位；开团与地形控制。" },
+      { order: "AG-2", side: "blue", hero: "镜", lane: "打野", player: "AG", intent: "来源 Pick 列表第 2 位；野区节奏和切后排。" },
+      { order: "AG-3", side: "blue", hero: "王昭君", lane: "中路", player: "AG", intent: "来源 Pick 列表第 3 位；阵地分割和守区。" },
+      { order: "AG-4", side: "blue", hero: "敖隐", lane: "发育路", player: "AG", intent: "来源 Pick 列表第 4 位；后期输出核心。" },
+      { order: "AG-5", side: "blue", hero: "朵莉亚", lane: "游走", player: "AG", intent: "来源 Pick 列表第 5 位；刷新关键技能，增强团战容错。" },
+      { order: "WOL-1", side: "red", hero: "马超", lane: "对抗路", player: "狼队", intent: "来源 Pick 列表第 1 位；边路突破和收割。" },
+      { order: "WOL-2", side: "red", hero: "大司命", lane: "打野", player: "狼队", intent: "来源 Pick 列表第 2 位；野区节奏和团战切入。" },
+      { order: "WOL-3", side: "red", hero: "安琪拉", lane: "中路", player: "狼队", intent: "来源 Pick 列表第 3 位；控制爆发和草丛威胁。" },
+      { order: "WOL-4", side: "red", hero: "公孙离", lane: "发育路", player: "狼队", intent: "来源 Pick 列表第 4 位；机动输出和拉扯。" },
+      { order: "WOL-5", side: "red", hero: "苏烈", lane: "游走", player: "狼队", intent: "来源 Pick 列表第 5 位；强开团和正面前排。" },
+    ],
+    analysis: [
+      "AG 二局选择镜+敖隐+朵莉亚，后期上限不低，但需要稳定拖到关键装备窗口。",
+      "狼队马超、大司命、公孙离三点机动性很强，能持续撕扯 AG 的阵地站位。",
+      "苏烈提供稳定开团，安琪拉补爆发控制，狼队阵容更偏主动进攻。",
+    ],
+    turningPoint: "公开帖记录第二局狼队击败 AG，将大比分扩大到 2:0。",
+    tags: ["2026 KPL", "春季赛常规赛", "阵容级 BP", "待校准逐手顺序"],
+    sourceLinks: ["https://bbs.hupu.com/638025067.html"],
+  },
+  {
+    id: "2026-spring-wolves-ag-g3",
+    date: "2026-03-21",
+    stage: "2026 KPL 春季赛常规赛",
+    game: "Game 3",
+    blueTeam: "成都 AG 超玩会",
+    redTeam: "重庆狼队",
+    result: "狼队 3:0 取胜",
+    patch: "公开帖未标明版本",
+    duration: "公开帖未披露",
+    source: "虎扑赛后帖整理 2026 KPL 春季赛常规赛狼队 3:0 AG，正文列出三局 Ban/Pick。",
+    confidence: "2026 公开赛后帖可确认阵容级 BP；逐手 pick 顺序仍需比赛视频/OCR 校准。新英雄/冷门字形保留原文写法。",
+    status: "verified-lineup",
+    bans: {
+      blue: ["影", "大司命", "大乔", "阿古朵", "杨玉环"],
+      red: ["孙尚香", "少司缘", "裴擒虎", "鲁班大师", "梦奇"],
+    },
+    picks: [
+      { order: "AG-1", side: "blue", hero: "蚩奼", lane: "对抗路", player: "AG", intent: "来源 Pick 列表第 1 位；保留公开帖原文写法，需后续对照官方英雄库。" },
+      { order: "AG-2", side: "blue", hero: "露娜", lane: "打野", player: "AG", intent: "来源 Pick 列表第 2 位；野区节奏和持续进场。" },
+      { order: "AG-3", side: "blue", hero: "王昭君", lane: "中路", player: "AG", intent: "来源 Pick 列表第 3 位；控场和阵地防守。" },
+      { order: "AG-4", side: "blue", hero: "敖隐", lane: "发育路", player: "AG", intent: "来源 Pick 列表第 4 位；后期输出核心。" },
+      { order: "AG-5", side: "blue", hero: "朵莉亚", lane: "游走", player: "AG", intent: "来源 Pick 列表第 5 位；刷新关键技能，提高核心容错。" },
+      { order: "WOL-1", side: "red", hero: "达摩", lane: "对抗路", player: "狼队", intent: "来源 Pick 列表第 1 位；侧翼开团和地形控制。" },
+      { order: "WOL-2", side: "red", hero: "镜", lane: "打野", player: "狼队", intent: "来源 Pick 列表第 2 位；野区节奏和切后排。" },
+      { order: "WOL-3", side: "red", hero: "海月", lane: "中路", player: "狼队", intent: "来源 Pick 列表第 3 位；单点限制和团战拆分。" },
+      { order: "WOL-4", side: "red", hero: "公孙离", lane: "发育路", player: "狼队", intent: "来源 Pick 列表第 4 位；机动射手承担输出。" },
+      { order: "WOL-5", side: "red", hero: "元流之子（坦克）", lane: "游走/前排", player: "狼队", intent: "来源 Pick 列表第 5 位；前排承伤和阵型保护。" },
+    ],
+    analysis: [
+      "AG 三局继续围绕敖隐+朵莉亚建立后期核心，但前中期需要露娜稳定发育和进场空间。",
+      "狼队使用镜、公孙离双机动点，海月负责拆关键人，阵容对 AG 核心威胁更直接。",
+      "该局英雄「蚩奼」保留来源原文，后续应与 2026 官方英雄列表做规范化校验。",
+    ],
+    turningPoint: "公开帖记录第三局狼队取胜，最终以 3:0 击败成都 AG 超玩会。",
+    tags: ["2026 KPL", "春季赛常规赛", "阵容级 BP", "英雄名待规范化"],
+    sourceLinks: ["https://bbs.hupu.com/638025067.html"],
   },
 ];
 
@@ -384,7 +625,7 @@ export function AgentWorkspace() {
   const [result, setResult] = useState<AgentRunResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
-  const [activeFeature, setActiveFeature] = useState<FeatureKey>("agent");
+  const [activeFeature, setActiveFeature] = useState<FeatureKey>("kpl");
   const [intentQuery, setIntentQuery] = useState(
     "孙尚香在巅峰 2000 分以上的局都是做什么出装？",
   );
@@ -815,28 +1056,32 @@ function AgentModule({
 }
 
 function KplBpModule() {
-  const [selectedMatchId, setSelectedMatchId] = useState(kplBpMatches[0].id);
+  const [selectedMatchId, setSelectedMatchId] = useState(currentKplBpMatches[0].id);
   const selectedMatch =
-    kplBpMatches.find((match) => match.id === selectedMatchId) || kplBpMatches[0];
+    currentKplBpMatches.find((match) => match.id === selectedMatchId) || currentKplBpMatches[0];
   const bluePicks = selectedMatch.picks.filter((pick) => pick.side === "blue");
   const redPicks = selectedMatch.picks.filter((pick) => pick.side === "red");
+  const totalGames = currentKplBpMatches.length;
+  const totalTeams = new Set(currentKplBpMatches.flatMap((match) => [match.blueTeam, match.redTeam])).size;
   const pickRows = Array.from({ length: Math.max(bluePicks.length, redPicks.length, 5) }, (_, index) => ({
     blue: bluePicks[index],
     red: redPicks[index],
   }));
 
   return (
-    <div className="mx-auto aspect-video max-h-[calc(100vh-120px)] w-full max-w-[1480px] overflow-hidden rounded-2xl border border-white/10 bg-[#081019] p-4">
-      <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[260px_1fr_330px]">
+    <div className="mx-auto w-full max-w-[1540px] rounded-2xl border border-white/10 bg-[#081019] p-4">
+      <div className="grid min-h-[680px] gap-4 xl:grid-cols-[300px_minmax(560px,1fr)_360px]">
         <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
           <div className="border-b border-white/10 pb-3">
             <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">KPL Database</p>
-            <h3 className="mt-1 text-lg font-semibold">??????</h3>
-            <p className="mt-1 text-xs text-slate-500">???????????</p>
+            <h3 className="mt-1 text-lg font-semibold">2026 BP 样本库</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              已录入 {totalGames} 局，覆盖 {totalTeams} 支战队；用于常选英雄、选手英雄池和蓝红方响应聚类。
+            </p>
           </div>
 
-          <div className="mt-3 space-y-2 overflow-y-auto pr-1">
-            {kplBpMatches.map((match) => (
+          <div className="mt-3 max-h-[430px] space-y-2 overflow-y-auto pr-1">
+            {currentKplBpMatches.map((match) => (
               <button
                 className={
                   "w-full rounded-xl border p-3 text-left transition " +
@@ -851,7 +1096,7 @@ function KplBpModule() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold">{match.game}</p>
                   <span className="rounded-md bg-black/20 px-2 py-1 text-[10px] text-slate-300">
-                    {match.status === "verified-lineup" ? "??" : "??"}
+                    {match.status === "verified-lineup" ? "已验证" : "待导入"}
                   </span>
                 </div>
                 <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">
@@ -863,9 +1108,9 @@ function KplBpModule() {
           </div>
 
           <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-            <p className="text-xs font-semibold text-slate-200">????</p>
+            <p className="text-xs font-semibold text-slate-200">聚类字段</p>
             <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px] text-slate-400">
-              {["match_id", "source", "ban", "pick", "side", "hero", "lane", "confidence"].map((field) => (
+              {["match_id", "team", "side", "ban", "pick", "player", "hero", "lane", "source", "confidence"].map((field) => (
                 <span className="rounded-md bg-white/[0.04] px-2 py-1" key={field}>{field}</span>
               ))}
             </div>
@@ -874,14 +1119,14 @@ function KplBpModule() {
 
         <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
           <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">16:9 Draft Board</p>
-              <h3 className="mt-1 text-xl font-semibold">{selectedMatch.blueTeam} vs {selectedMatch.redTeam}</h3>
+              <h3 className="mt-1 break-words text-xl font-semibold leading-7">{selectedMatch.blueTeam} vs {selectedMatch.redTeam}</h3>
               <p className="mt-1 text-xs text-slate-500">
                 {selectedMatch.stage} / {selectedMatch.result}
               </p>
             </div>
-            <span className="max-w-[280px] rounded-md bg-white/[0.06] px-3 py-1.5 text-right text-xs text-slate-300">
+            <span className="max-w-[320px] rounded-md bg-white/[0.06] px-3 py-1.5 text-right text-xs leading-5 text-slate-300">
               {selectedMatch.confidence}
             </span>
           </div>
@@ -889,8 +1134,8 @@ function KplBpModule() {
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-sky-100">AG Ban</p>
-                <span className="text-[11px] text-slate-500">????</span>
+                <p className="min-w-0 break-words text-sm font-semibold text-sky-100">{selectedMatch.blueTeam} Ban</p>
+                <span className="shrink-0 text-[11px] text-slate-500">蓝色方</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {selectedMatch.bans.blue.map((hero) => (
@@ -900,8 +1145,8 @@ function KplBpModule() {
             </div>
             <div className="rounded-xl border border-rose-300/20 bg-rose-300/8 p-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-rose-100">?? Ban</p>
-                <span className="text-[11px] text-slate-500">????</span>
+                <p className="min-w-0 break-words text-sm font-semibold text-rose-100">{selectedMatch.redTeam} Ban</p>
+                <span className="shrink-0 text-[11px] text-slate-500">红色方</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {selectedMatch.bans.red.map((hero) => (
@@ -911,28 +1156,28 @@ function KplBpModule() {
             </div>
           </div>
 
-          <div className="mt-3 grid min-h-0 flex-1 grid-rows-5 gap-2 overflow-hidden">
+          <div className="mt-3 grid min-h-0 flex-1 grid-rows-5 gap-2">
             {pickRows.map(({ blue, red }, index) => (
               <div className="grid min-h-0 grid-cols-[1fr_56px_1fr] items-stretch gap-2" key={index}>
-                <PickCell pick={blue} side="blue" fallback={"AG " + (index + 1)} />
+                <PickCell pick={blue} side="blue" fallback={selectedMatch.blueTeam + " " + (index + 1)} />
                 <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/20 text-xs font-semibold text-slate-400">
                   P{index + 1}
                 </div>
-                <PickCell pick={red} side="red" fallback={"WOL " + (index + 1)} />
+                <PickCell pick={red} side="red" fallback={selectedMatch.redTeam + " " + (index + 1)} />
               </div>
             ))}
           </div>
         </section>
 
         <section className="flex min-h-0 flex-col rounded-2xl border border-white/10 bg-[#0d1622] p-4">
-          <h3 className="text-lg font-semibold">????</h3>
+          <h3 className="text-lg font-semibold">选手英雄映射</h3>
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <MiniRoster title="AG ??" picks={bluePicks} tone="blue" />
-            <MiniRoster title="????" picks={redPicks} tone="red" />
+            <MiniRoster title={selectedMatch.blueTeam} picks={bluePicks} tone="blue" />
+            <MiniRoster title={selectedMatch.redTeam} picks={redPicks} tone="red" />
           </div>
 
           <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-300/8 p-3">
-            <p className="text-sm font-semibold text-emerald-100">??????</p>
+            <p className="text-sm font-semibold text-emerald-100">来源与可信度</p>
             <p className="mt-2 text-xs leading-5 text-slate-300">{selectedMatch.source}</p>
             <p className="mt-2 text-[11px] leading-5 text-amber-100">{selectedMatch.confidence}</p>
           </div>
@@ -944,7 +1189,7 @@ function KplBpModule() {
           </div>
 
           <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
-            <p className="text-xs text-slate-500">??? / ????</p>
+            <p className="text-xs text-slate-500">赛果 / 标签</p>
             <p className="mt-2 text-xs leading-5 text-slate-200">{selectedMatch.turningPoint}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {selectedMatch.tags.map((tag) => (
@@ -964,21 +1209,25 @@ function PickCell({
   side,
 }: {
   fallback: string;
-  pick?: { order: string; side: string; hero: string; lane: string; player: string; intent: string };
+  pick?: KplPick;
   side: "blue" | "red";
 }) {
   const isBlue = side === "blue";
 
   return (
-    <div className={"min-h-0 rounded-xl border p-2 " + (isBlue ? "border-sky-300/25 bg-sky-300/8" : "border-rose-300/25 bg-rose-300/8")}>
+    <div className={"min-h-[94px] rounded-xl border p-2 " + (isBlue ? "border-sky-300/25 bg-sky-300/8" : "border-rose-300/25 bg-rose-300/8")}>
       <div className="flex items-center justify-between gap-2">
-        <span className={"rounded-md px-2 py-1 text-[11px] font-semibold " + (isBlue ? "bg-sky-300 text-slate-950" : "bg-rose-300 text-slate-950")}>
+        <span className={"shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold " + (isBlue ? "bg-sky-300 text-slate-950" : "bg-rose-300 text-slate-950")}>
           {pick?.order || fallback}
         </span>
-        <span className="text-[10px] text-slate-500">{pick?.lane || "???"}</span>
+        <span className="min-w-0 truncate text-[10px] text-slate-500">{pick?.lane || "待导入"}</span>
       </div>
-      <p className="mt-1 truncate text-sm font-semibold">{pick?.hero || "???"}</p>
-      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">{pick?.intent || "???? OCR / ???????"}</p>
+      <p className="mt-1 break-words text-sm font-semibold leading-5">
+        {pick ? `${pick.player} / ${pick.hero}` : "待导入"}
+      </p>
+      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">
+        {pick?.intent || "等待视频 OCR 或公开战报导入"}
+      </p>
     </div>
   );
 }
@@ -988,20 +1237,20 @@ function MiniRoster({
   title,
   tone,
 }: {
-  picks: Array<{ order: string; side: string; hero: string; lane: string; player: string; intent: string }>;
+  picks: KplPick[];
   title: string;
   tone: "blue" | "red";
 }) {
   return (
     <div className={"rounded-xl border p-3 " + (tone === "blue" ? "border-sky-300/20 bg-sky-300/8" : "border-rose-300/20 bg-rose-300/8")}>
-      <p className="text-xs font-semibold text-slate-200">{title}</p>
-      <div className="mt-2 space-y-1.5">
+      <p className="break-words text-xs font-semibold leading-5 text-slate-200">{title}</p>
+      <div className="mt-2 max-h-[190px] space-y-1.5 overflow-y-auto pr-1">
         {picks.length ? picks.map((pick) => (
-          <div className="flex items-center justify-between rounded-md bg-black/20 px-2 py-1.5 text-[11px]" key={pick.order}>
+          <div className="grid grid-cols-[48px_1fr] gap-2 rounded-md bg-black/20 px-2 py-1.5 text-[11px]" key={pick.order}>
             <span className="text-slate-500">{pick.lane}</span>
-            <strong>{pick.hero}</strong>
+            <strong className="min-w-0 break-words text-right">{pick.player} / {pick.hero}</strong>
           </div>
-        )) : <p className="text-[11px] text-slate-500">???</p>}
+        )) : <p className="text-[11px] text-slate-500">待导入</p>}
       </div>
     </div>
   );
