@@ -1077,6 +1077,26 @@ function VoiceModule() {
           </span>
         </div>
 
+        <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-100">演示视频</p>
+              <p className="mt-1 text-xs text-slate-500">语音输入、意图识别、知识检索与陪玩播报链路</p>
+            </div>
+            <span className="rounded-md bg-emerald-300/15 px-2 py-1 text-xs text-emerald-100">
+              16:9 Demo
+            </span>
+          </div>
+          <video
+            className="aspect-video w-full bg-black object-cover"
+            controls
+            muted
+            playsInline
+            preload="metadata"
+            src="/voice-companion-demo.mp4"
+          />
+        </div>
+
         <div className="mt-5 flex items-center gap-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/8 p-4">
           <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-slate-950 shadow-lg shadow-emerald-950/40">
             <Bot size={34} />
