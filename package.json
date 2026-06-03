@@ -6,6 +6,7 @@
     "dev": "node node_modules/next/dist/bin/next dev",
     "build": "node node_modules/next/dist/bin/next build",
     "collect:kpl-bp": "node scripts/collect-kpl-bp.mjs",
+    "collect:kpl-official": "node scripts/collect-kpl-official.mjs",
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "eslint"
   },

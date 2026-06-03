@@ -2,10 +2,55 @@
 
 ## Current finding
 
-The app should prioritize 2026 KPL data for the BP module. A clean public API for full pick/ban order has not been found yet, so the practical dataset still needs two layers:
+The app should prioritize 2026 KPL data for the BP module. A clean public API for full pick/ban order has not been found yet, so the practical dataset needs three layers:
 
+- Official season-scale facts: schedule, match result, stage, team list, hero pick count, and hero pick win rate.
 - Lineup-level BP: public posts or match reports that list final Ban/Pick sets.
 - True draft order: replay/video BP-stage frames plus OCR or hero portrait matching.
+
+## Verified official bulk source
+
+The official KPL site (`https://kpl.qq.com/`) ships a frontend bundle that points to Tencent production APIs under `https://kplshop-op.timi-esports.qq.com/kplow`.
+
+Verified endpoints:
+
+- `getSeasonAndStageAndTeamList`
+  - Payload: `{ "seasonid": "KPL2026S1" }`
+  - Provides 2026 spring stages and team IDs/names/logos.
+- `getScheduleList`
+  - Payload: `{ "seasonid": "KPL2026S1" }`
+  - Provides the full 2026 spring schedule, match scores, BO format, stage, location, and schedule IDs.
+- `getHeroRankList`
+  - Payload: `{ "seasonid": "KPL2026S1" }`
+  - Provides hero ID/name, lane/position, pick count (`match_count`), pick win rate (`win_cr`), and best-player fields.
+
+Run:
+
+```bash
+npm run collect:kpl-official
+```
+
+Optional snapshot:
+
+```bash
+npm run collect:kpl-official -- --season KPL2026S1 --out data/kpl-official-2026-s1.json
+```
+
+Important limitation: the verified official endpoints expose pick counts and pick win rates, but not a reliable full ban list or B/P order for every game. `getScheduleDetail` was probed, but the currently verified call path appears to fall back to the official configured featured/final match rather than reliably expanding arbitrary `scheduleid` values. Treat it as untrusted until the exact detail parameter contract is confirmed.
+
+## How this helps BP prediction
+
+Official data can immediately support:
+
+- Global hero strength: `match_count` + `win_cr` from `getHeroRankList`.
+- Season meta: lane-specific hero popularity and win rate.
+- Team/match context: opponent, stage, BO format, and score from `getScheduleList`.
+
+Still needed for actual BP sequence prediction:
+
+- Per-game final picks, bans, and side assignment.
+- Exact pick order, especially blue first pick into red response windows.
+- Team-specific hero pools by player, which can be derived once game-level player-hero rows are collected.
 
 ## Verified 2026 seed source
 
