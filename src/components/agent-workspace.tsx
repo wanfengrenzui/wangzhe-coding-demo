@@ -36,6 +36,10 @@ import {
   kplGlobalBpSteps,
 } from "@/lib/kpl-bo7-rules";
 import { currentKplBpMatches, type KplPick } from "@/lib/kpl-bp-data";
+import {
+  formatDraftTime,
+  getDraftVideoSource,
+} from "@/lib/kpl-draft-video-data";
 import type { KnowledgeResult } from "@/lib/knowledge";
 
 type FeatureKey =
@@ -1166,6 +1170,7 @@ function KplBpModule() {
   const [selectedMatchId, setSelectedMatchId] = useState(currentKplBpMatches[0].id);
   const selectedMatch =
     currentKplBpMatches.find((match) => match.id === selectedMatchId) || currentKplBpMatches[0];
+  const draftVideo = getDraftVideoSource(selectedMatch.id);
   const bluePicks = selectedMatch.picks.filter((pick) => pick.side === "blue");
   const redPicks = selectedMatch.picks.filter((pick) => pick.side === "red");
   const totalGames = currentKplBpMatches.length;
@@ -1287,6 +1292,58 @@ function KplBpModule() {
             <p className="text-sm font-semibold text-emerald-100">来源与可信度</p>
             <p className="mt-2 text-xs leading-5 text-slate-300">{selectedMatch.source}</p>
             <p className="mt-2 text-[11px] leading-5 text-amber-100">{selectedMatch.confidence}</p>
+          </div>
+
+          <div className="mt-3 rounded-xl border border-sky-300/20 bg-sky-300/8 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-sky-100">Bilibili 逐手 BP 校验</p>
+                <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                  {draftVideo ? `${draftVideo.part} / cid ${draftVideo.cid}` : "尚未匹配官方回放"}
+                </p>
+              </div>
+              {draftVideo ? (
+                <a
+                  className="rounded-md border border-sky-300/20 p-1.5 text-sky-100 transition hover:border-sky-200"
+                  href={draftVideo.url}
+                  rel="noreferrer"
+                  target="_blank"
+                  title="打开官方 Bilibili 回放"
+                >
+                  <ExternalLink size={14} />
+                </a>
+              ) : null}
+            </div>
+            {draftVideo?.bpWindow ? (
+              <p className="mt-2 text-xs leading-5 text-slate-300">
+                BP 时间窗：{formatDraftTime(draftVideo.bpWindow.start)}-
+                {formatDraftTime(draftVideo.bpWindow.end)}，已进入抽帧/OCR 队列。
+              </p>
+            ) : (
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                该局已有/待匹配官方视频索引，下一步定位 BP UI 出现时间。
+              </p>
+            )}
+            {draftVideo?.checkpoints.length ? (
+              <div className="mt-2 space-y-1.5">
+                {draftVideo.checkpoints.map((checkpoint) => (
+                  <div
+                    className="rounded-md bg-black/20 px-2 py-1.5 text-[11px] leading-4 text-slate-300"
+                    key={`${draftVideo.matchId}-${checkpoint.at}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-sky-100">
+                        {formatDraftTime(checkpoint.at)} · {checkpoint.phase}
+                      </span>
+                      <span className="shrink-0 text-slate-500">
+                        {checkpoint.status === "frame-located" ? "已定位" : "待 OCR"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-slate-500">{checkpoint.evidence}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">

@@ -52,6 +52,41 @@ Still needed for actual BP sequence prediction:
 - Exact pick order, especially blue first pick into red response windows.
 - Team-specific hero pools by player, which can be derived once game-level player-hero rows are collected.
 
+## Verified Bilibili replay source for draft order
+
+Bilibili should be used as the video evidence layer for exact BP order. The official account `哔哩哔哩王者荣耀赛事` (`mid=392836434`) publishes match replays with per-game pages.
+
+Verified seed:
+
+- Video: `https://www.bilibili.com/video/BV1QXAAzsEZD/`
+- Title: `【2026KPL春季赛】3月21日 重庆狼队 VS 成都AG超玩会`
+- Owner: `哔哩哔哩王者荣耀赛事`
+- Pages:
+  - `p=1`, `cid=36865835856`, 第一局
+  - `p=2`, `cid=36866558772`, 第二局
+  - `p=3`, `cid=36867280757`, 第三局
+
+The first game BP UI has been frame-located:
+
+- `05:00` enters the KPL draft board.
+- `05:30` shows B1 into R1/R2.
+- `06:00` shows the next blue-side response block.
+- `07:00` shows the second ban phase.
+
+Run metadata and OCR-task collection:
+
+```bash
+npm run collect:bili-draft
+```
+
+Run local frame extraction when `ffmpeg` or `ffmpeg-static` is available:
+
+```bash
+npm run collect:bili-draft -- --extract --out-dir tmp/bili-draft-frames --seconds 300,330,360,420
+```
+
+The app keeps video evidence separate from final BP records. A frame being located means it is ready for OCR/template matching; it does not become a verified hero-order record until the hero names and sides are confirmed.
+
 ## Verified 2026 seed source
 
 - Hupu post: `https://bbs.hupu.com/638025067.html`
