@@ -1,14 +1,27 @@
 "use client";
 
 import {
+  Activity,
   BarChart3,
+  CheckCircle2,
+  ClipboardCheck,
   Database,
   Download,
+  FileText,
+  Gauge,
+  Layers3,
+  Loader2,
+  MessageSquareText,
+  Play,
+  RadioTower,
   RotateCcw,
   Save,
   Search,
+  ShieldCheck,
+  Target,
   Undo2,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
@@ -23,6 +36,7 @@ import {
 } from "@/lib/kpl-bo7-rules";
 import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
 import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
+import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 
 type TabKey = "agent" | "database" | "bp-predict" | "content" | "knowledge" | "feedback" | "evaluation";
 type HeroRole = "对抗路" | "打野" | "中路" | "发育路" | "游走" | "综合";
@@ -176,6 +190,65 @@ const pickScoreWeights = {
   playerProficiency: 0.15,
 };
 
+const defaultAgentTask =
+  "孙尚香在巅峰 2000 分以上的局通常做什么出装？请基于英雄技能、官方装备库和高分段出装样本，给出常规局、对面突进多、顺风压塔三种方案，并说明每套装备的取舍。";
+
+const waitingAgentSteps: AgentStep[] = [
+  { id: "parse", title: "任务解析", tool: "parseTask", status: "waiting", input: "等待任务提交", output: "识别任务类型、素材对象和验收重点" },
+  { id: "retrieve", title: "检索英雄/赛事语料", tool: "retrieveKnowledge", status: "waiting", input: "等待上一步结果", output: "匹配英雄、装备、KPL 表达和风险点" },
+  { id: "generate", title: "生成内容版本", tool: "generateContent", status: "waiting", input: "等待语料注入", output: "产出回答、脚本、标题和发布摘要" },
+  { id: "evaluate", title: "模型质量评估", tool: "evaluateOutput", status: "waiting", input: "等待内容版本", output: "评估专业度、事实准确性和风险等级" },
+  { id: "memo", title: "迭代备忘", tool: "createIterationMemo", status: "waiting", input: "等待评分结果", output: "生成验收结论和下一轮优化建议" },
+];
+
+const agentStatCards: Array<[string, string, string, LucideIcon]> = [
+  ["本周素材", "128", "+18%", RadioTower],
+  ["内容通过率", "86.4%", "+6.2%", ShieldCheck],
+  ["待复核输出", "21", "-9", ClipboardCheck],
+  ["语料命中率", "91%", "+4.8%", Gauge],
+];
+
+const defaultMatchLog = `00:45 双方中路抢线，蓝色方小乔拿到线权
+02:10 红色方打野入侵蓝区，辅助提前占草反蹲
+04:35 第一条暴君刷新，蓝色方射手绕后输出，打出一换三
+08:30 中路抱团，开团位命中多人，团战打出零换四
+12:20 蓝色方压高地失败，红色方反开追回节奏
+16:40 主宰坑拉扯，蓝色方抢下远古生物并完成收割`;
+
+const publishQueue = [
+  ["00:08:30-00:08:47", "孙尚香两枪收割", "标题/口播已生成", "待人工复核"],
+  ["00:14:02-00:14:18", "龙坑反打零换三", "解说语料已入库", "可发布"],
+  ["00:21:40-00:22:05", "高地防守翻盘", "BP 与阵容评估已生成", "待评估"],
+];
+
+const feedbackPosts = [
+  ["发育路玩家", "射手体验", "后期团战节奏太快，射手没视野很容易被秒，希望 AI 能提示站位风险。", "机会"],
+  ["KPL 观赛党", "解说内容", "团战复盘如果能自动指出胜负手和技能链，会比单纯口播更有用。", "正向"],
+  ["版本研究员", "装备讨论", "很多玩家不知道什么时候补穿透装，英雄语料库应该和装备推荐联动。", "需求"],
+  ["节目剪辑", "发布效率", "希望系统能直接给 15 秒高光、封面文案和审核结论。", "需求"],
+];
+
+const feedbackClusters = [
+  ["解说更有画面感", "36%", "正向"],
+  ["英雄技能描述泛化", "24%", "风险"],
+  ["标题需要更像短视频", "21%", "机会"],
+  ["想要主播锐评风格", "19%", "机会"],
+];
+
+const evaluationDimensions = [
+  ["事实准确性", 0.35, 84, "英雄、技能、装备、BP 顺序和资源归属不能错"],
+  ["王者专业度", 0.25, 88, "符合分路、版本、KPL 解说和高分段语境"],
+  ["赛事沉浸感", 0.2, 91, "能不能让用户听出团战画面和节奏变化"],
+  ["传播适配度", 0.12, 86, "标题、口播是否适合短视频和社区传播"],
+  ["安全合规", 0.08, 94, "不冒充真人、不输出辱骂、不编造确定数据"],
+] as const;
+
+const evaluationSamples = [
+  ["A 样本", "孙尚香巅峰 2000+ 出装回答", 87, "通过", "命中装备逻辑，需补充样本来源标签"],
+  ["B 样本", "KPL 团战切片解说稿", 91, "通过", "画面感强，事实校验无明显冲突"],
+  ["C 样本", "BP 推荐解释", 82, "复核", "规则正确，但推荐依据需要更多真实样本"],
+] as const;
+
 export function AgentWorkspace() {
   const [activeTab, setActiveTab] = useState<TabKey>("bp-predict");
   const [isDraftOpen, setIsDraftOpen] = useState(false);
@@ -223,10 +296,7 @@ export function AgentWorkspace() {
         {activeTab === "agent" ? <AgentPanel /> : null}
         {activeTab === "database" ? <DatabasePanel /> : null}
         {activeTab === "bp-predict" ? (
-          <div className="space-y-6">
-            <BpLandingPanel onOpenDraft={openDraft} totalHeroes={kplHeroCatalog.length} totalTeams={totalTeams} />
-            <RestoredWorkspaceModules />
-          </div>
+          <BpLandingPanel onOpenDraft={openDraft} totalHeroes={kplHeroCatalog.length} totalTeams={totalTeams} />
         ) : null}
         {activeTab === "content" ? <ContentPanel /> : null}
         {activeTab === "knowledge" ? <KnowledgePanel /> : null}
@@ -236,17 +306,6 @@ export function AgentWorkspace() {
 
       {isDraftOpen ? <BpDraftModal key={draftSeed} onClose={() => setIsDraftOpen(false)} /> : null}
     </main>
-  );
-}
-
-function RestoredWorkspaceModules() {
-  return (
-    <div className="space-y-6">
-      <AgentPanel />
-      <ContentPanel />
-      <FeedbackPanel />
-      <EvaluationPanel />
-    </div>
   );
 }
 
@@ -988,12 +1047,199 @@ function WorkflowList({ rows }: { rows: Array<[string, string, string, string]> 
   );
 }
 
+function agentStepClass(status: AgentStep["status"]) {
+  if (status === "completed") return "border-[#5EF2C2]/45 bg-[#5EF2C2]/10";
+  if (status === "running") return "border-[#4AA3FF]/45 bg-[#4AA3FF]/10";
+  if (status === "failed") return "border-[#FF5C7A]/45 bg-[#FF5C7A]/10";
+  return "border-white/10 bg-white/[0.035]";
+}
+
+function agentStepLabel(status: AgentStep["status"]) {
+  if (status === "completed") return "已完成";
+  if (status === "running") return "执行中";
+  if (status === "failed") return "失败";
+  return "等待中";
+}
+
+function generateSlicesFromLog(matchLog: string) {
+  return matchLog
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const time = line.match(/^\d{2}:\d{2}/)?.[0] || "--:--";
+      const score = 55 + (/(零换四|一换三|收割|抢下|高地|主宰|暴君|远古)/.test(line) ? 28 : 0) + (/(绕后|反开|入侵|拉扯|开团)/.test(line) ? 12 : 0);
+      const type = /(暴君|主宰|远古)/.test(line) ? "资源团" : /(零换四|一换三|收割|开团)/.test(line) ? "高光团战" : "节奏点";
+      return {
+        time,
+        type,
+        title: line.replace(/^\d{2}:\d{2}\s*/, ""),
+        score: Math.min(score, 96),
+        reason: "按击杀交换、资源归属、节奏反转和传播表达进行切片评分。",
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+}
+
 function AgentPanel() {
-  return <DashboardShell eyebrow="Agent Ops" title="Agent 任务中心" description="保留任务解析、知识检索、内容生成、质量评估和迭代备忘的工作流入口。"><WorkflowList rows={[["1", "任务解析", "识别任务类型、英雄对象和验收重点", "待执行"], ["2", "知识检索", "匹配英雄、装备、KPL 表达和风险点", "待执行"], ["3", "内容生成", "生成回答、脚本、标题和发布摘要", "待执行"], ["4", "模型评估", "检查事实准确性、专业度和可读性", "待执行"]]} /></DashboardShell>;
+  const [task, setTask] = useState(defaultAgentTask);
+  const [steps, setSteps] = useState(waitingAgentSteps);
+  const [result, setResult] = useState<AgentRunResult | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [error, setError] = useState("");
+  const [expandedStepIds, setExpandedStepIds] = useState<string[]>([]);
+  const completedCount = steps.filter((item) => item.status === "completed").length;
+
+  function toggleStep(stepId: string) {
+    setExpandedStepIds((current) => current.includes(stepId) ? current.filter((item) => item !== stepId) : [...current, stepId]);
+  }
+
+  async function runAgent() {
+    setIsRunning(true);
+    setError("");
+    setResult(null);
+    setSteps(waitingAgentSteps.map((item, index) => ({ ...item, status: index === 0 ? "running" : "waiting" })));
+
+    try {
+      const response = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task }),
+      });
+      if (!response.ok) throw new Error("Agent 执行失败");
+      const data = (await response.json()) as AgentRunResult;
+      setResult(data);
+      data.steps.forEach((item, index) => {
+        window.setTimeout(() => {
+          setSteps((current) =>
+            current.map((stepItem, stepIndex) => {
+              if (stepIndex < index) return { ...stepItem, status: "completed" };
+              if (stepIndex === index) return item;
+              if (stepIndex === index + 1) return { ...stepItem, status: "running" };
+              return stepItem;
+            }),
+          );
+        }, index * 420);
+      });
+      window.setTimeout(() => {
+        setSteps(data.steps);
+        setIsRunning(false);
+      }, data.steps.length * 420 + 200);
+    } catch (agentError) {
+      setError(agentError instanceof Error ? agentError.message : "未知错误");
+      setSteps((current) => current.map((item, index) => (index === 0 ? { ...item, status: "failed" } : item)));
+      setIsRunning(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[360px_1fr_320px]">
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2"><FileText size={17} className="text-[#5EF2C2]" /><h2 className="font-semibold">任务输入</h2></div>
+          <span className="rounded-[10px] bg-white/[0.06] px-2 py-1 text-[11px] text-[#8EA0B8]">Agent only</span>
+        </div>
+        <textarea className="mt-3 h-[230px] w-full resize-none rounded-[14px] border border-white/10 bg-black/25 p-3 text-xs leading-5 text-slate-100 outline-none focus:border-[#5EF2C2]/60" onChange={(event) => setTask(event.target.value)} value={task} />
+        <button className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-[#5EF2C2] px-4 text-sm font-semibold text-[#07111D] transition hover:bg-[#8FF8D4] disabled:opacity-70" disabled={isRunning} onClick={runAgent} type="button">
+          {isRunning ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+          {isRunning ? "Agent 执行中" : "运行 Agent"}
+        </button>
+        {error ? <p className="mt-2 text-xs text-[#FF9AAA]">{error}</p> : null}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {agentStatCards.map(([label, value, delta, Icon]) => (
+            <div className="rounded-[14px] border border-white/10 bg-white/[0.035] p-3" key={label}>
+              <div className="flex items-center justify-between text-[11px] text-[#8EA0B8]"><span>{label}</span><Icon size={13} className="text-[#5EF2C2]" /></div>
+              <div className="mt-2 flex items-end justify-between"><strong className="text-lg">{value}</strong><span className="text-[11px] text-[#5EF2C2]">{delta}</span></div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2"><Layers3 size={17} className="text-[#5EF2C2]" /><h2 className="font-semibold">Agent 执行链路</h2></div>
+          <span className="rounded-[10px] bg-white/[0.06] px-2.5 py-1 text-xs text-slate-300">{completedCount}/5 steps</span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {steps.map((item, index) => {
+            const isExpanded = expandedStepIds.includes(item.id);
+            return (
+              <div className={`rounded-[14px] border p-3 ${agentStepClass(item.status)}`} key={item.id}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[10px] bg-black/25 text-xs font-semibold">
+                      {item.status === "running" ? <Loader2 size={14} className="animate-spin" /> : item.status === "completed" ? <CheckCircle2 size={14} /> : index + 1}
+                    </div>
+                    <div><p className="text-sm font-medium text-slate-100">{item.title}</p><p className="mt-0.5 text-[11px] text-[#8EA0B8]">Tool: {item.tool}</p></div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button className="rounded-[8px] border border-white/10 bg-black/15 px-2 py-1 text-[11px] text-slate-200 transition hover:border-[#5EF2C2]/40" onClick={() => toggleStep(item.id)} type="button">{isExpanded ? "收起" : "展开"}</button>
+                    <span className="rounded-[8px] bg-black/20 px-2 py-1 text-[11px]">{agentStepLabel(item.status)}</span>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 text-xs md:grid-cols-2">
+                  <div><p className="text-[11px] text-[#8EA0B8]">输入摘要</p><p className={`mt-1 whitespace-pre-wrap leading-5 text-slate-300 ${isExpanded ? "" : "line-clamp-2"}`}>{item.input}</p></div>
+                  <div><p className="text-[11px] text-[#8EA0B8]">输出摘要</p><p className={`mt-1 whitespace-pre-wrap leading-5 text-slate-200 ${isExpanded ? "" : "line-clamp-2"}`}>{item.output}</p></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex items-center gap-2"><Target size={17} className="text-[#5EF2C2]" /><h2 className="font-semibold">Agent 产出</h2></div>
+        <div className="mt-3 rounded-[14px] border border-white/10 bg-white/[0.035] p-4">
+          <p className="text-[11px] text-[#8EA0B8]">发布结论</p>
+          <p className="mt-2 text-2xl font-semibold text-[#5EF2C2]">{result?.report.publishable || "等待评估"}</p>
+          <p className="mt-3 text-xs leading-5 text-[#8EA0B8]">{result?.report.summary || "运行 Agent 后展示可发布版本、验收风险和迭代方向。"}</p>
+        </div>
+        <div className="mt-3 rounded-[14px] border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-xs font-medium">标题候选</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(result?.artifacts.titles || ["关键团战转折", "AI 生成后展示", "KPL 级别压迫感"]).map((title) => <span className="rounded-[10px] border border-white/10 bg-black/20 px-2 py-1 text-[11px]" key={title}>{title}</span>)}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function ContentPanel() {
-  return <DashboardShell eyebrow="Content" title="赛事内容生成" description="用于赛事切片、标题、口播和赛后复盘内容生产。"><WorkflowList rows={[["切片", "团战高光候选", "识别关键资源团、反打和终结点", "样本中"], ["标题", "短视频标题", "生成 KPL 风格标题和封面文案", "可用"], ["口播", "解说脚本", "输出赛后复盘和陪玩语气版本", "可用"]]} /></DashboardShell>;
+  const [matchLog, setMatchLog] = useState(defaultMatchLog);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const slices = useMemo(() => generateSlicesFromLog(matchLog), [matchLog]);
+  const selectedSlice = slices[selectedIndex] || slices[0];
+  const generatedTitle = selectedSlice ? `等一个${selectedSlice.type}，比赛节奏直接变天` : "等待候选切片";
+  const generatedScript = selectedSlice ? `这一波发生在 ${selectedSlice.time}。${selectedSlice.title}。关键点不是单个击杀，而是技能链和站位同时打开，适合剪成 15 秒高光。` : "点击候选切片后，这里会自动生成解说口播。";
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_1fr_320px]">
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">视频导入与转写</h2><span className="rounded-[10px] bg-white/[0.06] px-2 py-1 text-xs text-[#8EA0B8]">URL / ASR / OCR</span></div>
+        <div className="mt-4 rounded-[14px] border border-white/10 bg-black/20 p-3"><p className="text-xs text-[#8EA0B8]">视频 URL</p><p className="mt-2 break-all text-sm text-[#BFE0FF]">https://www.bilibili.com/video/BV1R4411V7s2/</p></div>
+        <textarea className="mt-4 h-56 w-full resize-none rounded-[14px] border border-white/10 bg-black/30 p-3 text-xs leading-5 outline-none focus:border-[#5EF2C2]/60" onChange={(event) => setMatchLog(event.target.value)} value={matchLog} />
+        <div className="mt-3 flex gap-2"><button className="rounded-[12px] bg-[#5EF2C2] px-4 py-2 text-sm font-semibold text-[#07111D]" onClick={() => setSelectedIndex(0)} type="button">生成候选切片</button><button className="rounded-[12px] border border-white/10 px-4 py-2 text-sm text-slate-200" onClick={() => setMatchLog(defaultMatchLog)} type="button">重置转写</button></div>
+      </section>
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <h2 className="text-lg font-semibold">切片结果</h2>
+        <div className="mt-4 grid gap-3">
+          {slices.map((item, index) => (
+            <button className={(selectedIndex === index ? "border-[#5EF2C2]/50 bg-[#5EF2C2]/10" : "border-white/10 bg-white/[0.035] hover:border-white/20") + " rounded-[14px] border p-3 text-left transition"} key={`${item.time}-${item.title}`} onClick={() => setSelectedIndex(index)} type="button">
+              <div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="rounded-[8px] bg-[#4AA3FF]/15 px-2 py-1 text-xs text-[#BFE0FF]">{item.time}</span><span className="rounded-[8px] bg-[#5EF2C2]/15 px-2 py-1 text-xs text-[#CFFFEF]">{item.type}</span></div><span className="text-xs text-[#5EF2C2]">高光分 {item.score}</span></div>
+              <p className="mt-2 text-sm">{item.title}</p><p className="mt-1 text-xs leading-5 text-[#8EA0B8]">{item.reason}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <h2 className="text-lg font-semibold">生成与发布</h2>
+        <div className="mt-4 rounded-[14px] border border-[#5EF2C2]/20 bg-[#5EF2C2]/8 p-3"><p className="text-xs text-[#8EA0B8]">短视频标题</p><p className="mt-2 text-sm font-semibold text-[#CFFFEF]">{generatedTitle}</p><p className="mt-3 text-xs text-[#8EA0B8]">解说口播</p><p className="mt-2 text-xs leading-5 text-slate-200">{generatedScript}</p><div className="mt-3 grid grid-cols-2 gap-2 text-center text-xs"><button className="rounded-[10px] bg-[#5EF2C2] px-2 py-2 font-semibold text-[#07111D]" type="button">加入发布队列</button><button className="rounded-[10px] border border-white/10 px-2 py-2 text-slate-200" type="button">重新生成</button></div></div>
+        <div className="mt-4 space-y-3">{publishQueue.map(([time, title, artifact, status]) => <div className="rounded-[14px] bg-white/[0.035] p-3 text-xs" key={time}><div className="flex items-center justify-between gap-2"><p className="font-semibold text-slate-100">{title}</p><span className="rounded-[8px] border border-white/10 px-2 py-1 text-slate-300">{status}</span></div><p className="mt-2 text-[#8EA0B8]">{time}</p><p className="mt-1 text-[#5EF2C2]">{artifact}</p></div>)}</div>
+      </section>
+    </div>
+  );
 }
 
 function KnowledgePanel() {
@@ -1012,11 +1258,103 @@ function KnowledgePanel() {
 }
 
 function FeedbackPanel() {
-  return <DashboardShell eyebrow="Forum Signals" title="玩家反馈分析" description="论坛情绪、版本争议点、战队舆情和英雄讨论聚类入口。"><WorkflowList rows={[["论坛", "虎扑 / 社媒反馈", "聚合比赛后讨论和英雄争议", "待接入"], ["情绪", "正负向分析", "识别吐槽、认可、争议和节奏点", "可恢复"], ["样本", "KPL BP 语料", "把 BP 选择转成聚类特征", "进行中"]]} /></DashboardShell>;
+  const [posts, setPosts] = useState(
+    feedbackPosts.map(([user, tag, content, sentiment], index) => ({
+      id: index + 1,
+      user,
+      tag,
+      content,
+      sentiment,
+      likes: [24, 18, 31, 16][index] || 8,
+      replies: [6, 4, 9, 3][index] || 1,
+    })),
+  );
+  const [activeTag, setActiveTag] = useState("全部");
+  const [draft, setDraft] = useState("希望视频切片能自动标出胜负手，比如谁先开团、谁打满输出。");
+  const filteredPosts = activeTag === "全部" ? posts : posts.filter((post) => post.tag === activeTag);
+  const tags = ["全部", ...Array.from(new Set(posts.map((post) => post.tag)))];
+
+  function publishPost() {
+    const content = draft.trim();
+    if (!content) return;
+    const sentiment = /希望|想|能不能|需要/.test(content) ? "需求" : "讨论";
+    setPosts((current) => [{ id: Date.now(), user: "Demo 用户", tag: activeTag === "全部" ? "节目剪辑" : activeTag, content, sentiment, likes: 0, replies: 0 }, ...current]);
+    setDraft("");
+  }
+
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">玩家论坛</h2>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <button className={(activeTag === tag ? "bg-[#5EF2C2] text-[#07111D]" : "border border-white/10 text-slate-300") + " rounded-[10px] px-3 py-1.5 text-xs"} key={tag} onClick={() => setActiveTag(tag)} type="button">{tag}</button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 rounded-[14px] border border-white/10 bg-black/20 p-3">
+          <textarea className="h-24 w-full resize-none rounded-[12px] border border-white/10 bg-black/25 p-3 text-sm leading-6 outline-none focus:border-[#5EF2C2]/60" onChange={(event) => setDraft(event.target.value)} placeholder="发布一条玩家反馈..." value={draft} />
+          <div className="mt-3 flex items-center justify-between gap-3"><p className="text-xs text-[#8EA0B8]">论坛壳：发帖、筛选、点赞、回复数、情绪标签</p><button className="rounded-[10px] bg-[#5EF2C2] px-4 py-2 text-sm font-semibold text-[#07111D]" onClick={publishPost} type="button">发布反馈</button></div>
+        </div>
+        <div className="mt-4 grid gap-3">
+          {filteredPosts.map((post) => (
+            <article className="rounded-[14px] border border-white/10 bg-white/[0.035] p-4" key={post.id}>
+              <div className="flex items-center justify-between"><p className="font-semibold">{post.user}</p><span className="rounded-[8px] bg-white/[0.06] px-2 py-1 text-xs">{post.sentiment}</span></div>
+              <p className="mt-1 text-xs text-[#5EF2C2]">{post.tag}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{post.content}</p>
+              <div className="mt-3 flex gap-2 text-xs text-[#8EA0B8]">
+                <button className="rounded-[8px] border border-white/10 px-2 py-1 hover:text-[#CFFFEF]" onClick={() => setPosts((current) => current.map((item) => item.id === post.id ? { ...item, likes: item.likes + 1 } : item))} type="button">赞 {post.likes}</button>
+                <span className="rounded-[8px] border border-white/10 px-2 py-1">回复 {post.replies}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[#5EF2C2]" /><h2 className="text-lg font-semibold">反馈聚类</h2></div>
+        <div className="mt-4 space-y-3">
+          {feedbackClusters.map(([name, value, tag]) => (
+            <div className="rounded-[14px] bg-white/[0.035] p-3" key={name}>
+              <div className="flex items-center justify-between text-sm"><span>{name}</span><span className="text-[#5EF2C2]">{value}</span></div>
+              <p className="mt-1 text-xs text-[#8EA0B8]">{tag}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function EvaluationPanel() {
-  return <DashboardShell eyebrow="Evaluation" title="模型效果评估" description="用于比较 BP 推荐、内容生成和资料问答的样本表现。"><WorkflowList rows={[["准确性", "事实与规则", "检查 BP 顺序、全局 BP 和英雄可用性", "重点"], ["解释性", "推荐理由", "覆盖版本强度、英雄池、阵容缺口", "重点"], ["体验", "交互链路", "检查 Modal、撤销、重开、完成态", "进行中"]]} /></DashboardShell>;
+  return (
+    <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <h2 className="text-lg font-semibold">评分机制</h2>
+        <p className="mt-3 rounded-[14px] border border-[#5EF2C2]/20 bg-[#5EF2C2]/8 p-3 text-sm leading-6">总分 = Σ(维度分 × 权重)。85 分以上可发布，70-84 分进入人工复核，低于 70 分禁止发布并回收为负样本。</p>
+        <div className="mt-4 grid gap-3">
+          {evaluationDimensions.map(([name, weight, score, rule]) => (
+            <div className="rounded-[14px] border border-white/10 bg-white/[0.035] p-3" key={name}>
+              <div className="flex items-center justify-between text-sm"><span className="font-semibold">{name}</span><span className="text-[#5EF2C2]">{score} × {Math.round(weight * 100)}%</span></div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#5EF2C2]" style={{ width: `${score}%` }} /></div>
+              <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">{rule}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
+        <h2 className="text-lg font-semibold">评估样本池</h2>
+        <div className="mt-4 space-y-3">
+          {evaluationSamples.map(([id, name, score, status, note]) => (
+            <div className="rounded-[14px] border border-white/10 bg-white/[0.035] p-3" key={id}>
+              <div className="flex items-center justify-between gap-3"><p className="font-semibold">{name}</p><span className="rounded-[8px] bg-[#5EF2C2]/15 px-2 py-1 text-xs text-[#CFFFEF]">{score} / {status}</span></div>
+              <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">{note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
