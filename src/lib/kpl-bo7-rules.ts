@@ -5,71 +5,83 @@ export type BpAction = "ban" | "pick";
 export type BpRound = "first-ban" | "first-pick" | "second-ban" | "second-pick";
 
 export type Bo7BpStep = {
+  step: number;
   side: BpSide;
   action: BpAction;
-  count: number;
+  slot: number;
   label: string;
   code: string;
   round: BpRound;
 };
 
-const zh = {
-  blue: "\u84dd\u8272\u65b9",
-  red: "\u7ea2\u8272\u65b9",
+const sideLabel: Record<BpSide, string> = {
+  blue: "蓝方",
+  red: "红方",
 };
 
+const roundLabel: Record<BpRound, string> = {
+  "first-ban": "第一轮 Ban",
+  "first-pick": "第一轮 Pick",
+  "second-ban": "第二轮 Ban",
+  "second-pick": "第二轮 Pick",
+};
+
+function makeStep(step: number, side: BpSide, action: BpAction, slot: number, round: BpRound): Bo7BpStep {
+  const prefix = action === "ban" ? "Ban" : side === "blue" ? "B" : "R";
+  return {
+    step,
+    side,
+    action,
+    slot,
+    label: `${sideLabel[side]} ${prefix}${slot}`,
+    code: `${side === "blue" ? "B" : "R"}${action === "ban" ? "B" : "P"}${slot}`,
+    round,
+  };
+}
+
 export const kplGlobalBpSteps: Bo7BpStep[] = [
-  { side: "blue", action: "ban", count: 1, label: `${zh.blue} Ban 1`, code: "BB1", round: "first-ban" },
-  { side: "red", action: "ban", count: 1, label: `${zh.red} Ban 1`, code: "RB1", round: "first-ban" },
-  { side: "blue", action: "ban", count: 1, label: `${zh.blue} Ban 2`, code: "BB2", round: "first-ban" },
-  { side: "red", action: "ban", count: 1, label: `${zh.red} Ban 2`, code: "RB2", round: "first-ban" },
-  { side: "blue", action: "ban", count: 1, label: `${zh.blue} Ban 3`, code: "BB3", round: "first-ban" },
-  { side: "red", action: "ban", count: 1, label: `${zh.red} Ban 3`, code: "RB3", round: "first-ban" },
-  { side: "blue", action: "pick", count: 1, label: `${zh.blue} B1`, code: "B1", round: "first-pick" },
-  { side: "red", action: "pick", count: 2, label: `${zh.red} R1/R2`, code: "R1R2", round: "first-pick" },
-  { side: "blue", action: "pick", count: 2, label: `${zh.blue} B2/B3`, code: "B2B3", round: "first-pick" },
-  { side: "red", action: "pick", count: 1, label: `${zh.red} R3`, code: "R3", round: "first-pick" },
-  { side: "red", action: "ban", count: 1, label: `${zh.red} Ban 4`, code: "RB4", round: "second-ban" },
-  { side: "blue", action: "ban", count: 1, label: `${zh.blue} Ban 4`, code: "BB4", round: "second-ban" },
-  { side: "red", action: "ban", count: 1, label: `${zh.red} Ban 5`, code: "RB5", round: "second-ban" },
-  { side: "blue", action: "ban", count: 1, label: `${zh.blue} Ban 5`, code: "BB5", round: "second-ban" },
-  { side: "red", action: "pick", count: 1, label: `${zh.red} R4`, code: "R4", round: "second-pick" },
-  { side: "blue", action: "pick", count: 2, label: `${zh.blue} B4/B5`, code: "B4B5", round: "second-pick" },
-  { side: "red", action: "pick", count: 1, label: `${zh.red} R5`, code: "R5", round: "second-pick" },
+  makeStep(1, "blue", "ban", 1, "first-ban"),
+  makeStep(2, "red", "ban", 1, "first-ban"),
+  makeStep(3, "blue", "ban", 2, "first-ban"),
+  makeStep(4, "red", "ban", 2, "first-ban"),
+
+  makeStep(5, "blue", "pick", 1, "first-pick"),
+  makeStep(6, "red", "pick", 1, "first-pick"),
+  makeStep(7, "red", "pick", 2, "first-pick"),
+  makeStep(8, "blue", "pick", 2, "first-pick"),
+  makeStep(9, "blue", "pick", 3, "first-pick"),
+  makeStep(10, "red", "pick", 3, "first-pick"),
+
+  makeStep(11, "red", "ban", 3, "second-ban"),
+  makeStep(12, "blue", "ban", 3, "second-ban"),
+  makeStep(13, "red", "ban", 4, "second-ban"),
+  makeStep(14, "blue", "ban", 4, "second-ban"),
+
+  makeStep(15, "red", "pick", 4, "second-pick"),
+  makeStep(16, "blue", "pick", 4, "second-pick"),
+  makeStep(17, "blue", "pick", 5, "second-pick"),
+  makeStep(18, "red", "pick", 5, "second-pick"),
 ];
+
+export const peakDuelConfig = {
+  noBan: true,
+  blindPick: true,
+  ignoreGlobalBP: true,
+};
+
+export function getRoundLabel(round: BpRound) {
+  return roundLabel[round];
+}
 
 export function getCurrentGlobalBpStep(completedActions: {
   bans: Record<BpSide, number>;
   picks: Record<BpSide, number>;
 }) {
-  let banBlue = 0;
-  let banRed = 0;
-  let pickBlue = 0;
-  let pickRed = 0;
-
-  for (const step of kplGlobalBpSteps) {
-    const done =
-      step.action === "ban"
-        ? step.side === "blue"
-          ? completedActions.bans.blue - banBlue
-          : completedActions.bans.red - banRed
-        : step.side === "blue"
-          ? completedActions.picks.blue - pickBlue
-          : completedActions.picks.red - pickRed;
-
-    if (done < step.count) return step;
-
-    if (step.action === "ban") {
-      if (step.side === "blue") banBlue += step.count;
-      else banRed += step.count;
-    } else if (step.side === "blue") {
-      pickBlue += step.count;
-    } else {
-      pickRed += step.count;
-    }
-  }
-
-  return undefined;
+  return kplGlobalBpSteps.find((step) => {
+    const completed =
+      step.action === "ban" ? completedActions.bans[step.side] : completedActions.picks[step.side];
+    return completed < step.slot;
+  });
 }
 
 export function getTeamUsedHeroes(matches: KplBpMatch[], team: string) {
@@ -101,28 +113,26 @@ export function getBo7RuleSnapshot(params: {
   );
   const usedByPredictingTeam = getTeamUsedHeroes(previousGames, params.predictingTeam);
   const mode = params.gameIndex >= 7 ? "peak-duel" : "global-bp";
-  const nextSideSelection =
-    params.gameIndex === 1
-      ? "\u9996\u5c40\u6309\u8d5b\u524d\u9009\u8fb9\uff1b\u540e\u7eed\u901a\u5e38\u7531\u4e0a\u4e00\u5c40\u8d25\u8005\u9009\u8fb9\u3002"
-      : "\u4e0a\u4e00\u5c40\u8d25\u8005\u62e5\u6709\u672c\u5c40\u9009\u8fb9\u6743\u3002";
 
   return {
     mode,
     previousGames,
     usedByPredictingTeam,
-    nextSideSelection,
+    peakDuelConfig: mode === "peak-duel" ? peakDuelConfig : undefined,
+    nextSideSelection:
+      params.gameIndex === 1
+        ? "首局按赛前选边；后续通常由上一局败者选边。"
+        : "上一局败者拥有本局选边权。",
     ruleNotes:
       mode === "peak-duel"
         ? [
-            "Game 7 \u8fdb\u5165\u5dc5\u5cf0\u5bf9\u51b3\uff0c\u4e0d\u8d70\u5e38\u89c4 Ban/Pick\u3002",
-            "\u53cc\u65b9\u76f2\u9009\u9635\u5bb9\u5e76\u540c\u65f6\u63ed\u6653\uff0c\u540c\u961f\u9635\u5bb9\u5185\u82f1\u96c4\u4e0d\u80fd\u91cd\u590d\u3002",
-            "\u5dc5\u5cf0\u5bf9\u51b3\u4e0d\u6cbf\u7528\u524d 6 \u5c40\u7684\u5168\u5c40 BP \u82f1\u96c4\u590d\u7528\u9650\u5236\u3002",
+            "Game 7 预留巅峰对决配置：noBan、blindPick、ignoreGlobalBP。",
+            "当前先保留结构开关，后续可实现双方盲选同时揭晓。",
           ]
         : [
-            "\u524d 6 \u5c40\u8d70\u5168\u5c40 BP\uff1a\u540c\u4e00\u6218\u961f\u5df2\u4f7f\u7528\u82f1\u96c4\u540e\u7eed\u4e0d\u80fd\u518d\u6b21 Pick\u3002",
-            "\u7b2c\u4e00\u8f6e\u53cc\u65b9\u5404 Ban 3 \u4e2a\u82f1\u96c4\uff0c\u987a\u5e8f\u662f\u84dd/\u7ea2/\u84dd/\u7ea2/\u84dd/\u7ea2\u3002",
-            "\u524d\u4e09\u624b Pick \u987a\u5e8f\u662f B1 -> R1/R2 -> B2/B3 -> R3\u3002",
-            "\u7b2c\u4e8c\u8f6e Ban \u540e\uff0c\u540e\u7f6e\u4f4d Pick \u987a\u5e8f\u662f R4 -> B4/B5 -> R5\u3002",
+            "G1-G6 使用 18 步常规 BP：8 个 Ban + 10 个 Pick。",
+            "Pick 受全局 BP 限制；Ban 只限制当前小局。",
+            "当前局已 Ban 或已 Pick 的英雄不能再次选择。",
           ],
   };
 }
