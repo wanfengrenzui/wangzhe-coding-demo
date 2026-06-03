@@ -158,6 +158,9 @@ const roleByHero: Record<string, HeroRole> = {
 };
 
 const roleFilters: Array<HeroRole | "全部"> = ["全部", "对抗路", "打野", "中路", "发育路", "游走"];
+const banSlotsPerTeam = 4;
+const pickSlotsPerTeam = 5;
+const draftTotalSteps = kplGlobalBpSteps.length;
 
 const banScoreWeights = {
   versionStrength: 0.4,
@@ -249,7 +252,7 @@ function BpLandingPanel({
         <h2 className="mt-4 text-4xl font-bold">KPL BP 预测</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[#8EA0B8]">
           基于赛事数据、英雄池、历史阵容与全局 BP 规则，模拟真实赛场 BP 推演。点击后进入弹窗式工作台，
-          由系统一步一步引导完成 18 步常规 BP。
+          由系统一步一步引导完成 {draftTotalSteps} 步常规 BP。
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <button
@@ -273,7 +276,7 @@ function BpLandingPanel({
           <span className="rounded-[10px] bg-[#4AA3FF]/10 px-3 py-2 text-[#BFE0FF]">蓝方：成都AG超玩会</span>
           <span className="rounded-[10px] bg-[#FF5C7A]/10 px-3 py-2 text-[#FFD1DA]">红方：重庆狼队</span>
           <span className="rounded-[10px] bg-white/[0.04] px-3 py-2 text-slate-300">G1-G6 全局 BP</span>
-          <span className="rounded-[10px] bg-white/[0.04] px-3 py-2 text-slate-300">18 步常规流程</span>
+          <span className="rounded-[10px] bg-white/[0.04] px-3 py-2 text-slate-300">{draftTotalSteps} 步常规流程</span>
         </div>
         <button
           className="mt-5 w-full rounded-[10px] border border-[#5EF2C2]/40 bg-[#5EF2C2]/12 px-4 py-3 text-sm font-semibold text-[#EFFFF9] transition hover:-translate-y-0.5"
@@ -322,7 +325,7 @@ function BpDraftModal({ onClose }: { onClose: () => void }) {
     const step = computed.currentStep;
     setDraftState((state) => ({
       ...state,
-      currentStepIndex: Math.min(state.currentStepIndex + 1, kplGlobalBpSteps.length),
+      currentStepIndex: Math.min(state.currentStepIndex + 1, draftTotalSteps),
       actions: [
         ...state.actions,
         {
@@ -363,10 +366,10 @@ function BpDraftModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-md">
-      <div className="flex h-[88vh] w-[85vw] min-w-[320px] max-w-[1720px] flex-col overflow-hidden rounded-[20px] border border-white/12 bg-[#0B111A]/95 shadow-[0_0_80px_rgba(74,163,255,0.14)]">
+      <div className="flex h-[92vh] w-[96vw] min-w-[320px] max-w-[1720px] flex-col overflow-hidden rounded-[20px] border border-white/12 bg-[#0B111A]/95 shadow-[0_0_80px_rgba(74,163,255,0.14)] xl:h-[88vh] xl:w-[85vw]">
         <BPStatusBar computed={computed} draftState={draftState} onClose={onClose} onReset={reset} onSave={() => setDraftState((state) => ({ ...state, saved: true }))} onUndo={undo} />
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 xl:grid-cols-[16%_53%_31%]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 xl:grid-cols-[16%_53%_31%] xl:overflow-hidden">
           <DialoguePanel computed={computed} draftState={draftState} heroes={heroes} teams={teams} updateGame={(gameIndex) => setDraftState((state) => ({ ...state, gameIndex, currentStepIndex: 0, actions: [], saved: false }))} updateTeams={updateTeams} />
           <DraftArena computed={computed} draftState={draftState} heroes={heroes} />
           <PredictionPanel computed={computed} heroes={heroes} query={query} roleFilter={roleFilter} selectHero={selectHero} setQuery={setQuery} setRoleFilter={setRoleFilter} />
@@ -411,18 +414,18 @@ function BPStatusBar({
   onUndo: () => void;
 }) {
   return (
-    <div className="grid h-16 shrink-0 grid-cols-[1fr_1.5fr_auto] items-center gap-4 border-b border-white/10 px-4">
+    <div className="grid h-auto shrink-0 grid-cols-1 items-center gap-3 border-b border-white/10 px-4 py-3 xl:h-16 xl:grid-cols-[1fr_1.5fr_auto] xl:gap-4 xl:py-0">
       <div className="min-w-0">
         <h2 className="truncate text-lg font-semibold">KPL BP 预测</h2>
         <p className="mt-0.5 truncate text-xs text-[#8EA0B8]">
           {draftState.blueTeam} vs {draftState.redTeam} · BO7
         </p>
       </div>
-      <div className="grid grid-cols-4 gap-2 text-xs">
+      <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
         <StatusPill label="当前局数" value={`G${draftState.gameIndex}`} />
         <StatusPill label="当前阶段" value={computed.phaseLabel} />
         <StatusPill label="当前操作" value={computed.currentStep ? `${computed.currentTeam} ${computed.currentStep.action === "ban" ? "Ban" : "Pick"} ${computed.currentStep.slot} 位` : "BP 完成"} />
-        <StatusPill label="当前进度" value={`Step ${computed.progress.current} / 18`} />
+        <StatusPill label="当前进度" value={`Step ${computed.progress.current} / ${draftTotalSteps}`} />
       </div>
       <div className="flex items-center gap-2">
         <ModalActionButton onClick={onUndo}>
@@ -461,7 +464,7 @@ function DialoguePanel({
   updateTeams: (side: BpSide, team: string) => void;
 }) {
   return (
-    <section className="flex min-h-0 flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.82)] p-3">
+    <section className="flex min-h-[620px] flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.82)] p-3 xl:min-h-0">
       <div className="shrink-0">
         <p className="text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Dialogue</p>
         <h3 className="mt-1 text-base font-semibold">系统引导</h3>
@@ -490,7 +493,7 @@ function DialoguePanel({
 
       <CurrentTaskCard computed={computed} />
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-[12px] border border-white/10 bg-black/18 p-2">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-[12px] bg-black/14 p-2">
         <p className="mb-2 text-xs font-semibold text-[#EAF2FF]">对话日志</p>
         <div className="h-[calc(100%-26px)] space-y-2 overflow-y-auto pr-1">
           <ChatBubble tone="system">
@@ -525,7 +528,7 @@ function CurrentTaskCard({ computed }: { computed: DraftComputed }) {
       <div className="mt-3 space-y-2 text-xs leading-5 text-[#CFE6F5]">
         <p>当前队伍：{computed.currentTeam || "双方"}</p>
         <p>当前动作：{computed.currentStep ? `请选择第 ${computed.currentStep.slot} 个 ${computed.currentStep.action === "ban" ? "Ban 英雄" : "Pick 英雄"}` : "BP 已完成"}</p>
-        <p>剩余步骤：{Math.max(0, 18 - (computed.progress.current - 1))}</p>
+        <p>剩余步骤：{Math.max(0, draftTotalSteps - (computed.progress.current - 1))}</p>
         <p className="text-[#5EF2C2]">请在右侧英雄池中点击一个英雄。</p>
       </div>
     </div>
@@ -542,7 +545,7 @@ function DraftArena({
   heroes: HeroMeta[];
 }) {
   return (
-    <section className="flex min-h-0 flex-col rounded-[18px] border border-white/10 bg-[rgba(18,27,40,0.88)] p-4 shadow-[0_0_54px_rgba(74,163,255,0.1)]">
+    <section className="flex min-h-[640px] flex-col rounded-[18px] border border-white/10 bg-[rgba(18,27,40,0.88)] p-4 shadow-[0_0_54px_rgba(74,163,255,0.1)] xl:min-h-0">
       <div className="shrink-0 text-center">
         <div className="flex justify-center gap-1">
           {Array.from({ length: 7 }, (_, index) => index + 1).map((game) => (
@@ -551,13 +554,14 @@ function DraftArena({
             </span>
           ))}
         </div>
-        <h3 className="mt-3 text-lg font-semibold">{computed.phaseLabel}</h3>
+        <h3 className="mt-3 text-xl font-semibold">{computed.phaseLabel}</h3>
         <p className="mt-1 text-xs text-[#8EA0B8]">
           {computed.isCompleted ? "BP 完成" : `${computed.currentTeam} / ${computed.currentStep?.action === "ban" ? "Ban" : "Pick"} ${computed.currentStep?.slot} 位`}
         </p>
+        <p className="mt-2 text-[11px] text-[#566273]">当前规则：每队 {banSlotsPerTeam} Ban / {pickSlotsPerTeam} Pick，共 {draftTotalSteps} 步</p>
       </div>
 
-      <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] gap-5 overflow-hidden">
+      <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] gap-5 overflow-hidden">
         <TeamDraftBoard actions={draftState.actions} activeStep={computed.currentStep} heroes={heroes} side="blue" team={draftState.blueTeam} />
         <div className="flex flex-col items-center justify-center gap-3">
           <div className="h-full w-px bg-white/10" />
@@ -594,15 +598,21 @@ function TeamDraftBoard({
         </h4>
         {activeStep?.side === side ? <span className="rounded-[10px] border border-[#5EF2C2]/40 bg-[#5EF2C2]/10 px-2 py-1 text-[11px] text-[#DFFFF4]">操作中</span> : null}
       </div>
-      <p className="mt-5 text-xs text-[#8EA0B8]">Ban 位</p>
-      <div className="mt-3 grid grid-cols-4 gap-3">
-        {Array.from({ length: 4 }, (_, index) => (
+      <div className="mt-5 flex items-center justify-between text-xs text-[#8EA0B8]">
+        <span>Ban 位</span>
+        <span>{banSlotsPerTeam} slots</span>
+      </div>
+      <div className="mt-3 grid grid-cols-4 gap-2.5">
+        {Array.from({ length: banSlotsPerTeam }, (_, index) => (
           <DraftSlot active={activeStep?.side === side && activeStep.action === "ban" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "ban", index + 1)} key={index} label={`B${index + 1}`} side={side} size="small" />
         ))}
       </div>
-      <p className="mt-8 text-xs text-[#8EA0B8]">Pick 位</p>
-      <div className="mt-3 grid grid-cols-5 gap-3">
-        {Array.from({ length: 5 }, (_, index) => (
+      <div className="mt-8 flex items-center justify-between text-xs text-[#8EA0B8]">
+        <span>Pick 位</span>
+        <span>{pickSlotsPerTeam} slots</span>
+      </div>
+      <div className="mt-3 grid grid-cols-5 gap-2.5">
+        {Array.from({ length: pickSlotsPerTeam }, (_, index) => (
           <DraftSlot active={activeStep?.side === side && activeStep.action === "pick" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "pick", index + 1)} key={index} label={`P${index + 1}`} side={side} size="large" />
         ))}
       </div>
@@ -623,7 +633,7 @@ function PhaseProgressBar({ computed }: { computed: DraftComputed }) {
         <span className="text-[#8EA0B8]">
           当前：{computed.currentTeam || "完成"} {computed.currentStep ? `${computed.currentStep.action === "ban" ? "Ban" : "Pick"} 第 ${computed.currentStep.slot} 位` : "阵容分析"}
         </span>
-        <span className="font-semibold text-[#5EF2C2]">Step {computed.progress.current} / 18</span>
+        <span className="font-semibold text-[#5EF2C2]">Step {computed.progress.current} / {draftTotalSteps}</span>
       </div>
       <div className="mt-2 grid grid-cols-[4fr_6fr_4fr_4fr] gap-1">
         {segments.map(([label, count], index) => {
@@ -667,7 +677,7 @@ function PredictionPanel({
   const strategyMeta = getStrategyMeta(computed.currentStep?.action || "ban");
 
   return (
-    <section className="flex min-h-0 flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3">
+    <section className="flex min-h-[720px] flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3 xl:min-h-0">
       <p className="shrink-0 text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Prediction</p>
       {computed.isCompleted ? (
         <CompletionAnalysis computed={computed} />
@@ -824,20 +834,41 @@ function ScoreBreakdown({ item }: { item: Recommendation }) {
 }
 
 function DraftSlot({ active, hero, label, side, size }: { active: boolean; hero?: HeroMeta; label: string; side: BpSide; size: "small" | "large" }) {
-  const sideClass = side === "blue" ? "border-[#4AA3FF]/55" : "border-[#FF5C7A]/55";
+  const sideClass = side === "blue" ? "border-[#4AA3FF]/55 shadow-[0_0_16px_rgba(74,163,255,0.12)]" : "border-[#FF5C7A]/55 shadow-[0_0_16px_rgba(255,92,122,0.12)]";
+  const activeClass = "border-[#5EF2C2] bg-[#5EF2C2]/12 shadow-[0_0_18px_rgba(94,242,194,0.34)] animate-pulse";
+  const emptyClass = "border-white/10 bg-white/[0.035]";
   if (size === "large") {
     return (
-      <div className={(active ? "border-[#5EF2C2] bg-[#5EF2C2]/10 shadow-[0_0_22px_rgba(94,242,194,0.42)] animate-pulse" : hero ? sideClass + " bg-white/[0.04]" : "border-white/10 bg-white/[0.035]") + " min-h-[118px] rounded-[16px] border p-2 text-center transition"}>
-        <AssetImage alt={hero?.name || label} className="mx-auto h-16 w-16 rounded-[16px] border border-white/10 object-cover" fallback={hero?.name.slice(0, 2) || label} src={hero?.avatar} />
-        <p className="mt-2 truncate text-[11px] font-semibold text-[#EAF2FF]">{hero?.name || label}</p>
-        <p className="mt-1 text-[9px] text-[#8EA0B8]">{hero?.role || label}</p>
+      <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative flex min-h-[118px] flex-col items-center justify-center rounded-[16px] border p-2 text-center transition"}>
+        {active ? <span className="absolute right-1.5 top-1.5 rounded-[8px] bg-[#5EF2C2]/18 px-1.5 py-0.5 text-[9px] font-semibold text-[#CFFFEF]">操作中</span> : null}
+        {hero ? (
+          <>
+            <AssetImage alt={hero.name} className="h-14 w-14 rounded-[14px] border border-white/10 object-cover" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
+            <p className="mt-2 max-w-full truncate text-[11px] font-semibold text-[#EAF2FF]">{hero.name}</p>
+            <p className="mt-1 text-[9px] text-[#8EA0B8]">{hero.role}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-base font-black text-[#8EA0B8]">{label}</p>
+            <p className="mt-1 text-[9px] text-[#566273]">待选择</p>
+          </>
+        )}
       </div>
     );
   }
   return (
-    <div className={(active ? "border-[#5EF2C2] bg-[#5EF2C2]/10 shadow-[0_0_18px_rgba(94,242,194,0.38)] animate-pulse" : hero ? sideClass : "border-white/10 bg-white/[0.035]") + " rounded-[12px] border p-1.5 text-center transition"}>
-      <AssetImage alt={hero?.name || label} className="mx-auto h-11 w-11 rounded-full border border-white/10" fallback={hero?.name.slice(0, 2) || label} src={hero?.avatar} />
-      <p className="mt-1 truncate text-[10px] text-[#EAF2FF]">{hero?.name || label}</p>
+    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative flex aspect-square min-h-[74px] flex-col items-center justify-center rounded-[14px] border p-1.5 text-center transition"}>
+      {hero ? (
+        <>
+          <AssetImage alt={hero.name} className="h-9 w-9 rounded-[10px] border border-white/10 object-cover" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
+          <p className="mt-1 max-w-full truncate text-[10px] text-[#EAF2FF]">{hero.name}</p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-black text-[#8EA0B8]">{label}</p>
+          <p className="mt-0.5 text-[9px] text-[#566273]">Ban</p>
+        </>
+      )}
     </div>
   );
 }

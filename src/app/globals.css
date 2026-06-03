@@ -20,8 +20,28 @@ body {
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(142, 160, 184, 0.28) transparent;
 }
 
 ::selection {
   background: rgba(48, 209, 146, 0.28);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(142, 160, 184, 0.22);
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(94, 242, 194, 0.38);
 }
