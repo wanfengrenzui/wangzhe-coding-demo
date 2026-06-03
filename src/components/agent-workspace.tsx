@@ -223,7 +223,10 @@ export function AgentWorkspace() {
         {activeTab === "agent" ? <AgentPanel /> : null}
         {activeTab === "database" ? <DatabasePanel /> : null}
         {activeTab === "bp-predict" ? (
-          <BpLandingPanel onOpenDraft={openDraft} totalHeroes={kplHeroCatalog.length} totalTeams={totalTeams} />
+          <div className="space-y-6">
+            <BpLandingPanel onOpenDraft={openDraft} totalHeroes={kplHeroCatalog.length} totalTeams={totalTeams} />
+            <RestoredWorkspaceModules />
+          </div>
         ) : null}
         {activeTab === "content" ? <ContentPanel /> : null}
         {activeTab === "knowledge" ? <KnowledgePanel /> : null}
@@ -233,6 +236,17 @@ export function AgentWorkspace() {
 
       {isDraftOpen ? <BpDraftModal key={draftSeed} onClose={() => setIsDraftOpen(false)} /> : null}
     </main>
+  );
+}
+
+function RestoredWorkspaceModules() {
+  return (
+    <div className="space-y-6">
+      <AgentPanel />
+      <ContentPanel />
+      <FeedbackPanel />
+      <EvaluationPanel />
+    </div>
   );
 }
 
