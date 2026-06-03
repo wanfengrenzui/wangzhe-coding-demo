@@ -79,6 +79,7 @@ type Recommendation = {
     versionStrength: number;
     opponentUsage: number;
     opponentWinRate?: number;
+    poolCompression?: number;
     counterScore?: number;
     lineupFit?: number;
     playerProficiency?: number;
@@ -439,10 +440,10 @@ function BpDraftModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-md">
-      <div className="flex h-[92vh] w-[96vw] min-w-[320px] max-w-[1720px] flex-col overflow-hidden rounded-[20px] border border-white/12 bg-[#0B111A]/95 shadow-[0_0_80px_rgba(74,163,255,0.14)] xl:h-[88vh] xl:w-[85vw]">
+      <div className="flex h-[92vh] w-[96vw] min-w-[320px] max-w-[1900px] flex-col overflow-hidden rounded-[20px] border border-white/12 bg-[#0B111A]/95 shadow-[0_0_80px_rgba(74,163,255,0.14)] xl:h-[88vh] xl:w-[96vw]">
         <BPStatusBar computed={computed} draftState={draftState} onClose={onClose} onReset={reset} onSave={() => setDraftState((state) => ({ ...state, saved: true }))} onUndo={undo} />
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 xl:grid-cols-[16%_53%_31%] xl:overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 xl:grid-cols-[250px_minmax(0,1fr)_380px] xl:overflow-hidden">
           <DialoguePanel computed={computed} draftState={draftState} heroes={heroes} teams={teams} updateGame={(gameIndex) => setDraftState((state) => ({ ...state, gameIndex, currentStepIndex: 0, actions: [], saved: false }))} updateTeams={updateTeams} />
           <DraftArena computed={computed} draftState={draftState} heroes={heroes} />
           <PredictionPanel computed={computed} heroes={heroes} query={query} roleFilter={roleFilter} selectHero={selectHero} setQuery={setQuery} setRoleFilter={setRoleFilter} />
@@ -537,19 +538,19 @@ function DialoguePanel({
   updateTeams: (side: BpSide, team: string) => void;
 }) {
   return (
-    <section className="flex min-h-[620px] flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.82)] p-3 xl:min-h-0">
+    <section className="flex min-h-[560px] flex-col gap-2.5 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.82)] p-3 xl:min-h-0">
       <div className="shrink-0">
         <p className="text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Dialogue</p>
-        <h3 className="mt-1 text-base font-semibold">系统引导</h3>
-        <div className="mt-3 grid gap-2">
+        <h3 className="mt-1 text-sm font-semibold">系统引导</h3>
+        <div className="mt-2 grid gap-2">
           <SelectBox label="蓝方" value={draftState.blueTeam} values={teams} onChange={(value) => updateTeams("blue", value)} />
           <SelectBox label="红方" value={draftState.redTeam} values={teams} onChange={(value) => updateTeams("red", value)} />
         </div>
-        <div className="mt-3 grid grid-cols-7 gap-1">
+        <div className="mt-2 grid grid-cols-7 gap-1">
           {Array.from({ length: 7 }, (_, index) => index + 1).map((game) => (
             <button
               className={
-                "h-8 rounded-[10px] border text-xs font-semibold transition " +
+                "h-7 rounded-[9px] border text-[11px] font-semibold transition " +
                 (draftState.gameIndex === game
                   ? "border-[#5EF2C2]/60 bg-[#5EF2C2]/15 text-[#DFFFF4]"
                   : "border-white/10 bg-white/[0.035] text-[#8EA0B8]")
@@ -595,10 +596,10 @@ function DialoguePanel({
 
 function CurrentTaskCard({ computed }: { computed: DraftComputed }) {
   return (
-    <div className="shrink-0 rounded-[12px] border border-[#5EF2C2]/35 bg-[#5EF2C2]/10 p-3 shadow-[0_0_24px_rgba(94,242,194,0.08)]">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-[#5EF2C2]">Current Task</p>
-      <h4 className="mt-2 text-base font-semibold">{computed.phaseLabel}</h4>
-      <div className="mt-3 space-y-2 text-xs leading-5 text-[#CFE6F5]">
+    <div className="shrink-0 rounded-[12px] border border-[#5EF2C2]/35 bg-[#5EF2C2]/10 p-2.5 shadow-[0_0_24px_rgba(94,242,194,0.08)]">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-[#5EF2C2]">Current Task</p>
+      <h4 className="mt-1.5 text-sm font-semibold">{computed.phaseLabel}</h4>
+      <div className="mt-2 space-y-1.5 text-[11px] leading-5 text-[#CFE6F5]">
         <p>当前队伍：{computed.currentTeam || "双方"}</p>
         <p>当前动作：{computed.currentStep ? `请选择第 ${computed.currentStep.slot} 个 ${computed.currentStep.action === "ban" ? "Ban 英雄" : "Pick 英雄"}` : "BP 已完成"}</p>
         <p>剩余步骤：{Math.max(0, draftTotalSteps - (computed.progress.current - 1))}</p>
@@ -634,7 +635,7 @@ function DraftArena({
         <p className="mt-2 text-[11px] text-[#566273]">当前规则：双方各 Ban 2 → 双方各 Pick 3 → 双方各 Ban 2 → 补齐 Pick，共 {draftTotalSteps} 步</p>
       </div>
 
-      <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] gap-5 overflow-hidden">
+      <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)] gap-4 overflow-hidden">
         <TeamDraftBoard actions={draftState.actions} activeStep={computed.currentStep} heroes={heroes} side="blue" team={draftState.blueTeam} />
         <div className="flex flex-col items-center justify-center gap-3">
           <div className="h-full w-px bg-white/10" />
@@ -664,8 +665,8 @@ function TeamDraftBoard({
 }) {
   const color = side === "blue" ? "#4AA3FF" : "#FF5C7A";
   return (
-    <div className="min-h-0 rounded-[16px] border border-white/10 bg-[#0B111A]/72 p-4">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex min-h-0 flex-col rounded-[16px] border border-white/10 bg-[#0B111A]/72 p-4">
+      <div className="grid min-h-[34px] grid-cols-[1fr_auto] items-center gap-2">
         <h4 className="break-words text-lg font-semibold" style={{ color }}>
           {team}
         </h4>
@@ -675,18 +676,18 @@ function TeamDraftBoard({
         <span>Ban 位</span>
         <span>{banSlotsPerTeam} slots</span>
       </div>
-      <div className="mt-3 grid grid-cols-4 gap-2.5">
+      <div className="mt-3 grid grid-cols-4 justify-center gap-3">
         {Array.from({ length: banSlotsPerTeam }, (_, index) => (
-          <DraftSlot active={activeStep?.side === side && activeStep.action === "ban" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "ban", index + 1)} key={index} label={`B${index + 1}`} side={side} size="small" />
+          <BanSlot active={activeStep?.side === side && activeStep.action === "ban" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "ban", index + 1)} key={index} label={`B${index + 1}`} side={side} />
         ))}
       </div>
       <div className="mt-8 flex items-center justify-between text-xs text-[#8EA0B8]">
         <span>Pick 位</span>
         <span>{pickSlotsPerTeam} slots</span>
       </div>
-      <div className="mt-3 grid grid-cols-5 gap-2.5">
+      <div className="mt-3 grid grid-cols-5 justify-center gap-3">
         {Array.from({ length: pickSlotsPerTeam }, (_, index) => (
-          <DraftSlot active={activeStep?.side === side && activeStep.action === "pick" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "pick", index + 1)} key={index} label={`P${index + 1}`} side={side} size="large" />
+          <PickSlot active={activeStep?.side === side && activeStep.action === "pick" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "pick", index + 1)} key={index} label={`P${index + 1}`} side={side} />
         ))}
       </div>
     </div>
@@ -756,7 +757,7 @@ function PredictionPanel({
         <CompletionAnalysis computed={computed} />
       ) : (
         <>
-          <div className="max-h-[43%] shrink-0 overflow-hidden rounded-[14px] border border-[#5EF2C2]/25 bg-[#5EF2C2]/8 p-3 shadow-[0_0_30px_rgba(94,242,194,0.08)]">
+          <div className="relative max-h-[43%] shrink-0 rounded-[14px] border border-[#5EF2C2]/25 bg-[#5EF2C2]/8 p-3 shadow-[0_0_30px_rgba(94,242,194,0.08)]">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold">{computed.currentStep?.action === "ban" ? "Ban 策略推荐" : "Pick 策略推荐"}</h3>
@@ -845,7 +846,10 @@ function RecommendedHeroCard({ item, onClick }: { item: Recommendation; onClick:
           </div>
         </div>
       </button>
-      <button className="mt-2 text-[11px] font-semibold text-[#5EF2C2] hover:text-white" onClick={() => setExpanded((value) => !value)} type="button">
+      <button className="mt-2 text-[11px] font-semibold text-[#5EF2C2] hover:text-white" onClick={(event) => {
+        event.stopPropagation();
+        setExpanded((value) => !value);
+      }} type="button">
         {expanded ? "收起评分依据" : "查看分项评分"}
       </button>
       {expanded ? <ScoreBreakdown item={item} /> : null}
@@ -863,7 +867,7 @@ function StrategyRules({ meta }: { meta: StrategyMeta }) {
     playerProficiency: "选手熟练度",
   };
   return (
-    <div className="mt-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+    <div className="absolute right-3 top-12 z-20 w-[min(320px,calc(100%-24px))] rounded-[12px] border border-[#5EF2C2]/25 bg-[#07111D]/98 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)]">
       <p className="text-[11px] leading-5 text-[#AAB7C8]">{meta.scoringRule}</p>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         {Object.entries(meta.weights).map(([key, value]) => (
@@ -879,16 +883,17 @@ function StrategyRules({ meta }: { meta: StrategyMeta }) {
 function ScoreBreakdown({ item }: { item: Recommendation }) {
   const rows = item.type === "ban"
     ? [
-        ["版本强度", item.breakdown.versionStrength],
-        ["对手常用", item.breakdown.opponentUsage],
-        ["对手胜率", item.breakdown.opponentWinRate || 0],
+        ["版本强势", item.breakdown.versionStrength],
+        ["对方常用", item.breakdown.opponentUsage],
+        ["对方胜率", item.breakdown.opponentWinRate || 0],
+        ["英雄池压缩", item.breakdown.poolCompression || 0],
       ]
     : [
-        ["版本强度", item.breakdown.versionStrength],
-        ["反制对手", item.breakdown.opponentUsage],
-        ["对位克制", item.breakdown.counterScore || 0],
+        ["版本强势", item.breakdown.versionStrength],
         ["阵容适配", item.breakdown.lineupFit || 0],
+        ["Counter 能力", item.breakdown.counterScore || 0],
         ["选手熟练", item.breakdown.playerProficiency || 0],
+        ["限制体系", item.breakdown.opponentUsage],
       ];
   return (
     <div className="mt-2 space-y-1.5 rounded-[10px] border border-white/10 bg-black/18 p-2">
@@ -906,40 +911,55 @@ function ScoreBreakdown({ item }: { item: Recommendation }) {
   );
 }
 
-function DraftSlot({ active, hero, label, side, size }: { active: boolean; hero?: HeroMeta; label: string; side: BpSide; size: "small" | "large" }) {
-  const sideClass = side === "blue" ? "border-[#4AA3FF]/55 shadow-[0_0_16px_rgba(74,163,255,0.12)]" : "border-[#FF5C7A]/55 shadow-[0_0_16px_rgba(255,92,122,0.12)]";
+function PickSlot({ active, hero, label, side }: { active: boolean; hero?: HeroMeta; label: string; side: BpSide }) {
+  const sideClass = side === "blue" ? "border-[#4AA3FF]/60 shadow-[0_0_16px_rgba(74,163,255,0.12)]" : "border-[#FF5C7A]/60 shadow-[0_0_16px_rgba(255,92,122,0.12)]";
   const activeClass = "border-[#5EF2C2] bg-[#5EF2C2]/12 shadow-[0_0_18px_rgba(94,242,194,0.34)] animate-pulse";
   const emptyClass = "border-white/10 bg-white/[0.035]";
-  if (size === "large") {
-    return (
-      <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative flex min-h-[118px] flex-col items-center justify-center rounded-[16px] border p-2 text-center transition"}>
-        {active ? <span className="absolute right-1.5 top-1.5 rounded-[8px] bg-[#5EF2C2]/18 px-1.5 py-0.5 text-[9px] font-semibold text-[#CFFFEF]">操作中</span> : null}
-        {hero ? (
-          <>
-            <AssetImage alt={hero.name} className="h-14 w-14 rounded-[14px] border border-white/10 object-cover" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
-            <p className="mt-2 max-w-full truncate text-[11px] font-semibold text-[#EAF2FF]">{hero.name}</p>
-            <p className="mt-1 text-[9px] text-[#8EA0B8]">{hero.role}</p>
-          </>
-        ) : (
-          <>
-            <p className="text-base font-black text-[#8EA0B8]">{label}</p>
-            <p className="mt-1 text-[9px] text-[#566273]">待选择</p>
-          </>
-        )}
-      </div>
-    );
-  }
   return (
-    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative flex aspect-square min-h-[74px] flex-col items-center justify-center rounded-[14px] border p-1.5 text-center transition"}>
+    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative grid h-[clamp(108px,6.15vw,118px)] w-[clamp(72px,4.6vw,88px)] grid-rows-[1fr_34px] overflow-hidden rounded-[16px] border text-center transition"}>
+      {active ? <span className="absolute right-1.5 top-1.5 z-10 rounded-[8px] bg-[#5EF2C2]/18 px-1.5 py-0.5 text-[9px] font-semibold text-[#CFFFEF]">当前</span> : null}
       {hero ? (
         <>
-          <AssetImage alt={hero.name} className="h-9 w-9 rounded-[10px] border border-white/10 object-cover" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
-          <p className="mt-1 max-w-full truncate text-[10px] text-[#EAF2FF]">{hero.name}</p>
+          <AssetImage alt={hero.name} className="h-full w-full rounded-t-[15px] object-cover" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
+          <div className="min-w-0 border-t border-white/10 bg-[#070B12]/82 px-1.5 py-1">
+            <p className="truncate text-[11px] font-semibold text-[#EAF2FF]">{hero.name}</p>
+            <p className="truncate text-[9px] text-[#8EA0B8]">{hero.role}</p>
+          </div>
         </>
       ) : (
         <>
-          <p className="text-sm font-black text-[#8EA0B8]">{label}</p>
-          <p className="mt-0.5 text-[9px] text-[#566273]">Ban</p>
+          <div className="flex items-center justify-center"><p className="text-base font-black text-[#8EA0B8]">{label}</p></div>
+          <div className="border-t border-white/10 bg-[#070B12]/60 px-1.5 py-1">
+            <p className="text-[10px] text-[#566273]">待选</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BanSlot({ active, hero, label, side }: { active: boolean; hero?: HeroMeta; label: string; side: BpSide }) {
+  const sideClass = side === "blue" ? "border-[#4AA3FF]/55 shadow-[0_0_14px_rgba(74,163,255,0.1)]" : "border-[#FF5C7A]/55 shadow-[0_0_14px_rgba(255,92,122,0.1)]";
+  const activeClass = "border-[#5EF2C2] bg-[#5EF2C2]/12 shadow-[0_0_16px_rgba(94,242,194,0.32)] animate-pulse";
+  return (
+    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : "border-white/10 bg-white/[0.035]") + " relative grid h-[clamp(78px,4.6vw,88px)] w-[clamp(60px,3.75vw,72px)] grid-rows-[1fr_24px] overflow-hidden rounded-[14px] border text-center transition"}>
+      {active ? <span className="absolute right-1 top-1 z-10 rounded-[7px] bg-[#5EF2C2]/18 px-1 py-0.5 text-[8px] font-semibold text-[#CFFFEF]">当前</span> : null}
+      {hero ? (
+        <>
+          <div className="relative min-h-0">
+            <AssetImage alt={hero.name} className="h-full w-full rounded-t-[13px] object-cover opacity-70" fallback={hero.name.slice(0, 2)} src={hero.avatar} />
+            <span className="pointer-events-none absolute left-[-12%] top-1/2 h-0.5 w-[124%] -rotate-12 bg-[#FF5C7A]/75" />
+          </div>
+          <div className="min-w-0 border-t border-white/10 bg-[#070B12]/82 px-1 py-1">
+            <p className="truncate text-[10px] text-[#EAF2FF]">{hero.name}</p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center justify-center"><p className="text-sm font-black text-[#8EA0B8]">{label}</p></div>
+          <div className="border-t border-white/10 bg-[#070B12]/60 px-1 py-1">
+            <p className="text-[9px] text-[#566273]">Ban</p>
+          </div>
         </>
       )}
     </div>
@@ -1486,6 +1506,7 @@ function recommendHeroes({ currentStep, currentTeam, disabledReason, heroes, opp
     const versionStrength = clampScore(hero.strengthScore);
     const opponentUsage = clampScore(opponentPool * 26 + opponentBanPressure * 12 + (hero.tags.includes("高频") ? 10 : 0));
     const opponentWinRate = clampScore(54 + opponentPool * 7 + versionStrength * 0.18);
+    const poolCompression = clampScore(opponentUsage * 0.7 + versionStrength * 0.3);
     const counterScore = clampScore(46 + opponentBanPressure * 12 + (hero.role === "打野" || hero.role === "中路" ? 10 : 4));
     const lineupFit = clampScore((roleNeeds.includes(hero.role) ? 82 : 52) + (hero.tags.includes("高频") ? 8 : 0));
     const playerProficiency = clampScore(hero.playerPoolScore + ownPool * 8);
@@ -1501,8 +1522,8 @@ function recommendHeroes({ currentStep, currentTeam, disabledReason, heroes, opp
         hero,
         totalScore,
         summary: `${hero.name} 当前版本优先级 ${versionStrength}，${opponentTeam} 使用压力 ${opponentUsage}，预估胜率表现 ${opponentWinRate}，Ban 价值较高。`,
-        breakdown: { versionStrength, opponentUsage, opponentWinRate },
-        dimensions: ["版本强度", "对手常用程度", "对手胜率表现"],
+        breakdown: { versionStrength, opponentUsage, opponentWinRate, poolCompression },
+        dimensions: ["版本强势", "对方常用", "对方胜率", "英雄池压缩价值"],
       };
     }
 
@@ -1519,7 +1540,7 @@ function recommendHeroes({ currentStep, currentTeam, disabledReason, heroes, opp
       totalScore,
       summary: `${hero.name} 可补足${hero.role}位置，版本强度 ${versionStrength}，阵容适配 ${lineupFit}，同时具备对位反制与选手熟练度支撑。`,
       breakdown: { versionStrength, opponentUsage, counterScore, lineupFit, playerProficiency },
-      dimensions: ["版本强度", "反制对手", "对位克制", "阵容适配", "选手熟练度"],
+      dimensions: ["版本强势", "阵容适配", "Counter 能力", "选手熟练度", "对手体系限制"],
     };
   }).sort((a, b) => b.totalScore - a.totalScore).slice(0, 8);
 }
