@@ -11,6 +11,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { AssetImage } from "@/components/asset-image";
 import {
@@ -23,8 +24,9 @@ import {
   type BpSide,
 } from "@/lib/kpl-bo7-rules";
 import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
+import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
 
-type TabKey = "database" | "bp-predict";
+type TabKey = "agent" | "database" | "bp-predict" | "content" | "knowledge" | "feedback" | "evaluation";
 type HeroRole = "对抗路" | "打野" | "中路" | "发育路" | "游走" | "综合";
 
 type HeroMeta = {
@@ -72,8 +74,13 @@ type HeroStatus =
   | "推荐";
 
 const tabs: Array<{ key: TabKey; label: string; hint: string }> = [
+  { key: "agent", label: "Agent 任务中心", hint: "任务链路" },
   { key: "database", label: "KPL 赛事中心", hint: "赛事数据" },
   { key: "bp-predict", label: "BP 预测", hint: "模拟推演" },
+  { key: "content", label: "赛事内容生成", hint: "切片 / 标题" },
+  { key: "knowledge", label: "英雄资料库", hint: "英雄 / 装备" },
+  { key: "feedback", label: "玩家反馈分析", hint: "论坛情绪" },
+  { key: "evaluation", label: "模型效果评估", hint: "样本 / 权重" },
 ];
 
 const heroIdMap: Record<string, number> = {
@@ -176,7 +183,7 @@ export function AgentWorkspace() {
     [],
   );
   const totalHeroes = useMemo(
-    () => new Set(currentKplBpMatches.flatMap((match) => match.picks.map((pick) => pick.hero))).size,
+    () => kplHeroCatalog.length,
     [],
   );
 
@@ -221,11 +228,15 @@ export function AgentWorkspace() {
       </header>
 
       <div className="mx-auto max-w-[1500px] px-5 py-5">
-        {activeTab === "database" ? (
-          <DatabasePanel />
-        ) : (
+        {activeTab === "agent" ? <AgentPanel /> : null}
+        {activeTab === "database" ? <DatabasePanel /> : null}
+        {activeTab === "bp-predict" ? (
           <BpLandingPanel onOpenDraft={openDraft} totalHeroes={totalHeroes} totalTeams={totalTeams} />
-        )}
+        ) : null}
+        {activeTab === "content" ? <ContentPanel /> : null}
+        {activeTab === "knowledge" ? <KnowledgePanel /> : null}
+        {activeTab === "feedback" ? <FeedbackPanel /> : null}
+        {activeTab === "evaluation" ? <EvaluationPanel /> : null}
       </div>
 
       {isDraftOpen ? <BpDraftModal key={draftSeed} onClose={() => setIsDraftOpen(false)} /> : null}
@@ -288,6 +299,144 @@ function BpLandingPanel({
           进入模拟
         </button>
       </section>
+    </div>
+  );
+}
+
+function AgentPanel() {
+  return (
+    <DashboardShell
+      eyebrow="Agent Ops"
+      title="Agent 任务中心"
+      description="保留任务解析、知识检索、内容生成、质量评估和迭代备忘的工作流入口。"
+    >
+      <WorkflowList
+        rows={[
+          ["1", "任务解析", "识别任务类型、英雄对象和验收重点", "待执行"],
+          ["2", "知识检索", "匹配英雄、装备、KPL 表达和风险点", "待执行"],
+          ["3", "内容生成", "生成回答、脚本、标题和发布摘要", "待执行"],
+          ["4", "模型评估", "检查事实准确性、专业度和可读性", "待执行"],
+        ]}
+      />
+    </DashboardShell>
+  );
+}
+
+function ContentPanel() {
+  return (
+    <DashboardShell
+      eyebrow="Content"
+      title="赛事内容生成"
+      description="用于赛事切片、标题、口播和赛后复盘内容生产。"
+    >
+      <WorkflowList
+        rows={[
+          ["切片", "团战高光候选", "识别关键资源团、反打和终结点", "样本中"],
+          ["标题", "短视频标题", "生成 KPL 风格标题和封面文案", "可用"],
+          ["口播", "解说脚本", "输出赛后复盘和陪玩语气版本", "可用"],
+        ]}
+      />
+    </DashboardShell>
+  );
+}
+
+function KnowledgePanel() {
+  return (
+    <DashboardShell
+      eyebrow="Knowledge"
+      title="英雄资料库"
+      description="英雄、装备、铭文、技能和 KPL 解说语料仍保留为资料入口。"
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          ["英雄目录", `${kplHeroCatalog.length} 个英雄`, "/knowledge/heroes"],
+          ["装备资料", "装备属性与出装建议", "/knowledge/equipment"],
+          ["BP 样本", `${currentKplBpMatches.length} 局`, ""],
+        ].map(([title, desc, href]) => (
+          <a
+            className="rounded-xl border border-white/10 bg-white/[0.035] p-4 transition hover:border-[#5EF2C2]/40"
+            href={href || undefined}
+            key={title}
+          >
+            <p className="font-semibold">{title}</p>
+            <p className="mt-2 text-xs text-slate-400">{desc}</p>
+          </a>
+        ))}
+      </div>
+    </DashboardShell>
+  );
+}
+
+function FeedbackPanel() {
+  return (
+    <DashboardShell
+      eyebrow="Forum Signals"
+      title="玩家反馈分析"
+      description="论坛情绪、版本争议点、战队舆情和英雄讨论聚类入口。"
+    >
+      <WorkflowList
+        rows={[
+          ["论坛", "虎扑 / 社媒反馈", "聚合比赛后讨论和英雄争议", "待接入"],
+          ["情绪", "正负向分析", "识别吐槽、认可、争议和节奏点", "可恢复"],
+          ["样本", "KPL BP 语料", "把 BP 选择转成聚类特征", "进行中"],
+        ]}
+      />
+    </DashboardShell>
+  );
+}
+
+function EvaluationPanel() {
+  return (
+    <DashboardShell
+      eyebrow="Evaluation"
+      title="模型效果评估"
+      description="用于比较 BP 推荐、内容生成和资料问答的样本表现。"
+    >
+      <WorkflowList
+        rows={[
+          ["准确性", "事实与规则", "检查 BP 顺序、全局 BP 和英雄可用性", "重点"],
+          ["解释性", "推荐理由", "覆盖版本强度、英雄池、阵容缺口", "重点"],
+          ["体验", "交互链路", "检查 Modal、撤销、重开、完成态", "进行中"],
+        ]}
+      />
+    </DashboardShell>
+  );
+}
+
+function DashboardShell({
+  children,
+  description,
+  eyebrow,
+  title,
+}: {
+  children: ReactNode;
+  description: string;
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-[rgba(18,27,40,0.85)] p-6">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#5EF2C2]">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-bold">{title}</h2>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">{description}</p>
+      <div className="mt-6">{children}</div>
+    </section>
+  );
+}
+
+function WorkflowList({ rows }: { rows: Array<[string, string, string, string]> }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {rows.map(([id, title, body, status]) => (
+        <div className="rounded-xl border border-white/10 bg-white/[0.035] p-4" key={`${id}-${title}`}>
+          <p className="text-xs text-slate-500">{id}</p>
+          <h3 className="mt-2 font-semibold">{title}</h3>
+          <p className="mt-2 text-xs leading-5 text-slate-400">{body}</p>
+          <span className="mt-3 inline-flex rounded-md border border-[#5EF2C2]/30 px-2 py-1 text-[11px] text-[#CFFFEF]">
+            {status}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -835,7 +984,7 @@ function HeroCard({
   );
 }
 
-function ChatBubble({ children, tone }: { children: React.ReactNode; tone: "system" | BpSide }) {
+function ChatBubble({ children, tone }: { children: ReactNode; tone: "system" | BpSide }) {
   const className =
     tone === "system"
       ? "border-[#5EF2C2]/30 bg-[#5EF2C2]/10 text-[#DFFFF4]"
@@ -1071,24 +1220,15 @@ function useDraftComputed(state: DraftState, heroes: HeroMeta[], query: string) 
 }
 
 function buildHeroes(): HeroMeta[] {
-  const names = Array.from(
-    new Set(
-      currentKplBpMatches.flatMap((match) => [
-        ...match.picks.map((pick) => pick.hero),
-        ...match.bans.blue,
-        ...match.bans.red,
-      ]),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
-
-  return names.map((name) => {
+  return kplHeroCatalog.map((item) => {
+    const name = item.name;
     const pickCount = countHero(name, "pick");
     const banCount = countHero(name, "ban");
-    const role = roleByHero[name] || "综合";
+    const role = roleByHero[name] || normalizeHeroRole(item.role);
     return {
-      id: name,
+      id: item.name,
       name,
-      avatar: getHeroAvatar(name),
+      avatar: item.avatar || getHeroAvatar(name),
       role,
       tags: [role, pickCount >= 3 ? "高频" : "样本", banCount >= 3 ? "高压 Ban" : "可摇摆"],
       strengthScore: 60 + Math.min(30, pickCount * 4 + banCount * 2),
@@ -1097,6 +1237,15 @@ function buildHeroes(): HeroMeta[] {
       playerPoolScore: 50 + Math.min(35, pickCount * 5),
     };
   });
+}
+
+function normalizeHeroRole(role: string): HeroRole {
+  if (role === "战士" || role === "坦克") return "对抗路";
+  if (role === "刺客") return "打野";
+  if (role === "法师") return "中路";
+  if (role === "射手") return "发育路";
+  if (role === "辅助") return "游走";
+  return "综合";
 }
 
 function recommendHeroes({
