@@ -30,6 +30,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 import type { IntentResult } from "@/lib/intent";
+import {
+  getBo7RuleSnapshot,
+  getCurrentGlobalBpStep,
+  kplGlobalBpSteps,
+} from "@/lib/kpl-bo7-rules";
 import { currentKplBpMatches, type KplPick } from "@/lib/kpl-bp-data";
 import type { KnowledgeResult } from "@/lib/knowledge";
 
@@ -776,10 +781,33 @@ function BpPredictModule() {
   const [opponentTeam, setOpponentTeam] = useState("重庆狼队");
   const [selectedHero, setSelectedHero] = useState("马超");
   const [mode, setMode] = useState<"pick" | "ban">("pick");
+  const [gameIndex, setGameIndex] = useState(1);
   const predictingTeam = opponentTeam === blueTeam ? redTeam : blueTeam;
+  const ruleSnapshot = useMemo(
+    () =>
+      getBo7RuleSnapshot({
+        allMatches: currentKplBpMatches,
+        blueTeam,
+        redTeam,
+        gameIndex,
+        predictingTeam,
+      }),
+    [blueTeam, gameIndex, predictingTeam, redTeam],
+  );
+  const currentBpStep = getCurrentGlobalBpStep({
+    bans: { blue: 2, red: 2 },
+    picks: opponentTeam === blueTeam ? { blue: 1, red: 0 } : { blue: 0, red: 1 },
+  });
   const predictions = useMemo(
-    () => getBpPredictions({ mode, opponentTeam, predictingTeam, selectedHero }),
-    [mode, opponentTeam, predictingTeam, selectedHero],
+    () =>
+      getBpPredictions({
+        mode,
+        opponentTeam,
+        predictingTeam,
+        selectedHero,
+        unavailableHeroes: ruleSnapshot.mode === "global-bp" ? ruleSnapshot.usedByPredictingTeam : [],
+      }),
+    [mode, opponentTeam, predictingTeam, ruleSnapshot, selectedHero],
   );
   const teamPool = getHeroCountsForTeam(predictingTeam, "pick");
   const opponentPool = getHeroCountsForTeam(opponentTeam, "pick");
@@ -800,6 +828,26 @@ function BpPredictModule() {
           <PredictSelect label="红色方" value={redTeam} values={teams} onChange={setRedTeam} />
           <PredictSelect label="对方已选战队" value={opponentTeam} values={[blueTeam, redTeam]} onChange={setOpponentTeam} />
           <PredictSelect label="对方刚选英雄" value={selectedHero} values={heroes} onChange={setSelectedHero} />
+          <div>
+            <p className="text-xs text-slate-500">BO7 局数</p>
+            <div className="mt-2 grid grid-cols-7 gap-1">
+              {Array.from({ length: 7 }, (_, index) => index + 1).map((value) => (
+                <button
+                  className={
+                    "h-8 rounded-md border text-xs font-semibold transition " +
+                    (gameIndex === value
+                      ? "border-emerald-300/60 bg-emerald-300/15 text-emerald-100"
+                      : "border-white/10 bg-white/[0.035] text-slate-400 hover:border-white/20")
+                  }
+                  key={value}
+                  onClick={() => setGameIndex(value)}
+                  type="button"
+                >
+                  G{value}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <p className="text-xs text-slate-500">预测动作</p>
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -830,6 +878,11 @@ function BpPredictModule() {
           <p className="mt-2 text-sm leading-6 text-slate-200">
             {opponentTeam} 已选择 <strong className="text-rose-200">{selectedHero}</strong>，预测{" "}
             <strong className="text-sky-200">{predictingTeam}</strong> 的下一手 {mode === "pick" ? "Pick" : "Ban"}。
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            {ruleSnapshot.mode === "global-bp"
+              ? `Game ${gameIndex} 全局 BP：预测 Pick 会避开 ${predictingTeam} 已用英雄。`
+              : "Game 7 巅峰对决：盲选提交，不套用前 6 局复用限制。"}
           </p>
         </div>
       </section>
@@ -886,9 +939,48 @@ function BpPredictModule() {
           <HeroCountList counts={opponentPool} />
         </div>
         <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
+          <p className="text-xs font-semibold text-slate-200">BO7 规则上下文</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            <div className="rounded-lg bg-black/20 p-2">
+              <p className="text-slate-500">模式</p>
+              <p className="mt-1 font-semibold text-emerald-100">
+                {ruleSnapshot.mode === "global-bp" ? "全局 BP" : "巅峰对决"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-black/20 p-2">
+              <p className="text-slate-500">当前流程</p>
+              <p className="mt-1 font-semibold text-slate-100">
+                {ruleSnapshot.mode === "global-bp"
+                  ? `${currentBpStep?.label || "BP 完成"} / 共 ${kplGlobalBpSteps.length} 步`
+                  : "双方盲选"}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-400">{ruleSnapshot.nextSideSelection}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {ruleSnapshot.ruleNotes.map((note) => (
+              <span className="rounded-md border border-white/10 px-2 py-1 text-[11px] text-slate-300" key={note}>
+                {note}
+              </span>
+            ))}
+          </div>
+          {ruleSnapshot.usedByPredictingTeam.length ? (
+            <>
+              <p className="mt-3 text-xs text-slate-500">{predictingTeam} 全局 BP 已用英雄</p>
+              <div className="mt-2 flex max-h-24 flex-wrap gap-1.5 overflow-y-auto pr-1">
+                {ruleSnapshot.usedByPredictingTeam.map((hero) => (
+                  <span className="rounded-md bg-black/25 px-2 py-1 text-[11px] text-rose-100" key={hero}>
+                    {hero}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
           <p className="text-xs font-semibold text-slate-200">后续可升级</p>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            现在是可解释规则模型。样本继续扩到 100+ 局后，可以把队伍、选手、蓝红方、已选英雄、已禁英雄做成特征，训练排序模型输出下一手 BP。
+            现在是“规则引擎 + 可解释预测”模型。样本继续扩到 100+ 局后，可以把队伍、选手、蓝红方、已选英雄、已禁英雄、BO7 已用英雄做成特征，训练排序模型输出下一手 BP。
           </p>
         </div>
       </section>
@@ -988,15 +1080,18 @@ function getBpPredictions({
   opponentTeam,
   predictingTeam,
   selectedHero,
+  unavailableHeroes = [],
 }: {
   mode: "pick" | "ban";
   opponentTeam: string;
   predictingTeam: string;
   selectedHero: string;
+  unavailableHeroes?: string[];
 }) {
+  const unavailable = new Set(unavailableHeroes);
   const heroes = Array.from(
     new Set(currentKplBpMatches.flatMap((match) => match.picks.map((pick) => pick.hero))),
-  ).filter((hero) => hero !== selectedHero);
+  ).filter((hero) => hero !== selectedHero && (mode === "ban" || !unavailable.has(hero)));
   const globalPickCounts = getGlobalPickCounts();
   const predictingPickCounts = new Map(getHeroCountsForTeam(predictingTeam, "pick"));
   const predictingBanCounts = new Map(getHeroCountsForTeam(predictingTeam, "ban"));
@@ -1024,7 +1119,7 @@ function getBpPredictions({
           ["响应命中", response],
         ] as Array<[string, number]>,
         reason: mode === "pick"
-          ? `${hero} 的推荐来自 ${predictingTeam} 自身英雄池、全局出场频率，以及历史上面对 ${selectedHero} 时的同局响应。`
+          ? `${hero} 的推荐来自 ${predictingTeam} 自身英雄池、全局出场频率，以及历史上面对 ${selectedHero} 时的同局响应；全局 BP 已用英雄会被自动排除。`
           : `${hero} 的禁用优先级来自 ${opponentTeam} 的常用英雄、${predictingTeam} 的历史 Ban 倾向，以及全局热度。`,
       };
     })
