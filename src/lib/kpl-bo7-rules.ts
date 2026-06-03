@@ -130,7 +130,7 @@ export function getBo7RuleSnapshot(params: {
             "当前先保留结构开关，后续可实现双方盲选同时揭晓。",
           ]
         : [
-            "G1-G6 使用 18 步常规 BP：8 个 Ban + 10 个 Pick。",
+            "G1-G6 使用 18 步常规 BP：双方各 Ban 2 后各 Pick 3，再各 Ban 2，最后补齐 Pick。",
             "Pick 受全局 BP 限制；Ban 只限制当前小局。",
             "当前局已 Ban 或已 Pick 的英雄不能再次选择。",
           ],

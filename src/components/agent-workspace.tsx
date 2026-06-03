@@ -558,7 +558,7 @@ function DraftArena({
         <p className="mt-1 text-xs text-[#8EA0B8]">
           {computed.isCompleted ? "BP 完成" : `${computed.currentTeam} / ${computed.currentStep?.action === "ban" ? "Ban" : "Pick"} ${computed.currentStep?.slot} 位`}
         </p>
-        <p className="mt-2 text-[11px] text-[#566273]">当前规则：每队 {banSlotsPerTeam} Ban / {pickSlotsPerTeam} Pick，共 {draftTotalSteps} 步</p>
+        <p className="mt-2 text-[11px] text-[#566273]">当前规则：双方各 Ban 2 → 双方各 Pick 3 → 双方各 Ban 2 → 补齐 Pick，共 {draftTotalSteps} 步</p>
       </div>
 
       <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)] gap-5 overflow-hidden">
@@ -622,10 +622,10 @@ function TeamDraftBoard({
 
 function PhaseProgressBar({ computed }: { computed: DraftComputed }) {
   const segments = [
-    ["第一轮 Ban", 4],
-    ["第一轮 Pick", 6],
-    ["第二轮 Ban", 4],
-    ["第二轮 Pick", 4],
+    ["各 Ban 2", 4],
+    ["各 Pick 3", 6],
+    ["再 Ban 2", 4],
+    ["补齐 Pick", 4],
   ] as const;
   return (
     <div className="mt-3 shrink-0 rounded-[12px] border border-white/10 bg-black/20 p-3">
