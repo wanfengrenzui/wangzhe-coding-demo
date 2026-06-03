@@ -7,7 +7,6 @@ import {
   RotateCcw,
   Save,
   Search,
-  Trophy,
   Undo2,
   X,
 } from "lucide-react";
@@ -58,10 +57,25 @@ type DraftState = {
 };
 
 type Recommendation = {
+  type: BpAction;
   hero: HeroMeta;
-  score: number;
-  reason: string;
+  totalScore: number;
+  summary: string;
+  breakdown: {
+    versionStrength: number;
+    opponentUsage: number;
+    opponentWinRate?: number;
+    counterScore?: number;
+    lineupFit?: number;
+    playerProficiency?: number;
+  };
   dimensions: string[];
+};
+
+type StrategyMeta = {
+  currentMode: BpAction;
+  scoringRule: string;
+  weights: Record<string, number>;
 };
 
 type DraftComputed = {
@@ -144,6 +158,20 @@ const roleByHero: Record<string, HeroRole> = {
 };
 
 const roleFilters: Array<HeroRole | "全部"> = ["全部", "对抗路", "打野", "中路", "发育路", "游走"];
+
+const banScoreWeights = {
+  versionStrength: 0.4,
+  opponentUsage: 0.35,
+  opponentWinRate: 0.25,
+};
+
+const pickScoreWeights = {
+  versionStrength: 0.25,
+  opponentUsage: 0.2,
+  counterScore: 0.2,
+  lineupFit: 0.2,
+  playerProficiency: 0.15,
+};
 
 export function AgentWorkspace() {
   const [activeTab, setActiveTab] = useState<TabKey>("bp-predict");
@@ -338,7 +366,7 @@ function BpDraftModal({ onClose }: { onClose: () => void }) {
       <div className="flex h-[88vh] w-[85vw] min-w-[320px] max-w-[1720px] flex-col overflow-hidden rounded-[20px] border border-white/12 bg-[#0B111A]/95 shadow-[0_0_80px_rgba(74,163,255,0.14)]">
         <BPStatusBar computed={computed} draftState={draftState} onClose={onClose} onReset={reset} onSave={() => setDraftState((state) => ({ ...state, saved: true }))} onUndo={undo} />
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 xl:grid-cols-[22%_48%_30%]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 xl:grid-cols-[16%_53%_31%]">
           <DialoguePanel computed={computed} draftState={draftState} heroes={heroes} teams={teams} updateGame={(gameIndex) => setDraftState((state) => ({ ...state, gameIndex, currentStepIndex: 0, actions: [], saved: false }))} updateTeams={updateTeams} />
           <DraftArena computed={computed} draftState={draftState} heroes={heroes} />
           <PredictionPanel computed={computed} heroes={heroes} query={query} roleFilter={roleFilter} selectHero={selectHero} setQuery={setQuery} setRoleFilter={setRoleFilter} />
@@ -433,10 +461,10 @@ function DialoguePanel({
   updateTeams: (side: BpSide, team: string) => void;
 }) {
   return (
-    <section className="flex min-h-0 flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3">
+    <section className="flex min-h-0 flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.82)] p-3">
       <div className="shrink-0">
         <p className="text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Dialogue</p>
-        <h3 className="mt-1 text-lg font-semibold">系统引导</h3>
+        <h3 className="mt-1 text-base font-semibold">系统引导</h3>
         <div className="mt-3 grid gap-2">
           <SelectBox label="蓝方" value={draftState.blueTeam} values={teams} onChange={(value) => updateTeams("blue", value)} />
           <SelectBox label="红方" value={draftState.redTeam} values={teams} onChange={(value) => updateTeams("red", value)} />
@@ -514,7 +542,7 @@ function DraftArena({
   heroes: HeroMeta[];
 }) {
   return (
-    <section className="flex min-h-0 flex-col rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3 shadow-[0_0_44px_rgba(74,163,255,0.08)]">
+    <section className="flex min-h-0 flex-col rounded-[18px] border border-white/10 bg-[rgba(18,27,40,0.88)] p-4 shadow-[0_0_54px_rgba(74,163,255,0.1)]">
       <div className="shrink-0 text-center">
         <div className="flex justify-center gap-1">
           {Array.from({ length: 7 }, (_, index) => index + 1).map((game) => (
@@ -529,7 +557,7 @@ function DraftArena({
         </p>
       </div>
 
-      <div className="mt-3 grid min-h-0 flex-1 grid-cols-[1fr_68px_1fr] gap-3 overflow-hidden">
+      <div className="mt-5 grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] gap-5 overflow-hidden">
         <TeamDraftBoard actions={draftState.actions} activeStep={computed.currentStep} heroes={heroes} side="blue" team={draftState.blueTeam} />
         <div className="flex flex-col items-center justify-center gap-3">
           <div className="h-full w-px bg-white/10" />
@@ -559,21 +587,21 @@ function TeamDraftBoard({
 }) {
   const color = side === "blue" ? "#4AA3FF" : "#FF5C7A";
   return (
-    <div className="min-h-0 rounded-[12px] border border-white/10 bg-[#0B111A]/70 p-3">
+    <div className="min-h-0 rounded-[16px] border border-white/10 bg-[#0B111A]/72 p-4">
       <div className="flex items-center justify-between gap-2">
         <h4 className="break-words text-lg font-semibold" style={{ color }}>
           {team}
         </h4>
         {activeStep?.side === side ? <span className="rounded-[10px] border border-[#5EF2C2]/40 bg-[#5EF2C2]/10 px-2 py-1 text-[11px] text-[#DFFFF4]">操作中</span> : null}
       </div>
-      <p className="mt-4 text-xs text-[#8EA0B8]">Ban 位</p>
-      <div className="mt-2 grid grid-cols-4 gap-2">
+      <p className="mt-5 text-xs text-[#8EA0B8]">Ban 位</p>
+      <div className="mt-3 grid grid-cols-4 gap-3">
         {Array.from({ length: 4 }, (_, index) => (
           <DraftSlot active={activeStep?.side === side && activeStep.action === "ban" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "ban", index + 1)} key={index} label={`B${index + 1}`} side={side} size="small" />
         ))}
       </div>
-      <p className="mt-4 text-xs text-[#8EA0B8]">Pick 位</p>
-      <div className="mt-2 grid grid-cols-5 gap-2">
+      <p className="mt-8 text-xs text-[#8EA0B8]">Pick 位</p>
+      <div className="mt-3 grid grid-cols-5 gap-3">
         {Array.from({ length: 5 }, (_, index) => (
           <DraftSlot active={activeStep?.side === side && activeStep.action === "pick" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "pick", index + 1)} key={index} label={`P${index + 1}`} side={side} size="large" />
         ))}
@@ -632,53 +660,71 @@ function PredictionPanel({
   setQuery: (value: string) => void;
   setRoleFilter: (value: HeroRole | "全部") => void;
 }) {
+  const [showRules, setShowRules] = useState(false);
   const filtered = heroes.filter((hero) => hero.name.includes(query.trim()) && (roleFilter === "全部" || hero.role === roleFilter));
   const recommendedIds = new Set(computed.recommendedHeroes.map((item) => item.hero.id));
   const ordered = mergeHeroMetaLists(computed.recommendedHeroes.map((item) => item.hero), filtered).slice(0, 60);
+  const strategyMeta = getStrategyMeta(computed.currentStep?.action || "ban");
 
   return (
-    <section className="flex min-h-0 flex-col rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3">
-      <p className="text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Prediction</p>
+    <section className="flex min-h-0 flex-col gap-3 rounded-[16px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-3">
+      <p className="shrink-0 text-xs uppercase tracking-[0.25em] text-[#5EF2C2]">Prediction</p>
       {computed.isCompleted ? (
         <CompletionAnalysis computed={computed} />
       ) : (
         <>
-          <div className="mt-2 shrink-0 rounded-[12px] border border-[#5EF2C2]/25 bg-[#5EF2C2]/8 p-3">
-            <h3 className="text-base font-semibold">{computed.currentStep?.action === "ban" ? "建议 Ban" : "建议 Pick"}</h3>
-            <div className="mt-2 space-y-2">
+          <div className="max-h-[43%] shrink-0 overflow-hidden rounded-[14px] border border-[#5EF2C2]/25 bg-[#5EF2C2]/8 p-3 shadow-[0_0_30px_rgba(94,242,194,0.08)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold">{computed.currentStep?.action === "ban" ? "Ban 策略推荐" : "Pick 策略推荐"}</h3>
+                <p className="mt-1 text-[11px] text-[#8EA0B8]">按总分排序，点击卡片直接填入当前槽位。</p>
+              </div>
+              <button className="rounded-[10px] border border-white/10 bg-black/20 px-2 py-1 text-[11px] text-[#CFFFEF] transition hover:border-[#5EF2C2]/40" onClick={() => setShowRules((value) => !value)} type="button">
+                评分规则
+              </button>
+            </div>
+            {showRules ? <StrategyRules meta={strategyMeta} /> : null}
+            <div className="mt-3 max-h-[calc(43vh-128px)] space-y-2 overflow-y-auto pr-1">
               {computed.recommendedHeroes.slice(0, 5).map((item) => (
                 <RecommendedHeroCard item={item} key={item.hero.id} onClick={() => selectHero(item.hero)} />
               ))}
             </div>
           </div>
 
-          <div className="mt-3 shrink-0">
-            <label className="flex h-10 items-center gap-2 rounded-[10px] border border-white/10 bg-[#0B111A] px-3">
-              <Search className="h-4 w-4 text-[#566273]" />
-              <input className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-[#566273]" onChange={(event) => setQuery(event.target.value)} placeholder="搜索英雄" value={query} />
-            </label>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {roleFilters.map((role) => (
-                <button
-                  className={(roleFilter === role ? "border-[#5EF2C2]/45 bg-[#5EF2C2]/12 text-[#DFFFF4]" : "border-white/10 bg-white/[0.035] text-[#8EA0B8]") + " rounded-[10px] border px-2 py-1 text-[11px]"}
-                  key={role}
-                  onClick={() => setRoleFilter(role)}
-                  type="button"
-                >
-                  {role}
-                </button>
-              ))}
+          <div className="flex min-h-0 flex-1 flex-col rounded-[14px] border border-white/10 bg-[#0B111A]/72 p-3">
+            <div className="shrink-0">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-semibold">英雄搜索与选择</h3>
+                  <p className="mt-1 text-[11px] text-[#8EA0B8]">{filtered.length} 个匹配英雄 / 当前英雄目录 {heroes.length} 个</p>
+                </div>
+              </div>
+              <label className="mt-3 flex h-12 items-center gap-3 rounded-[12px] border border-white/10 bg-[#070B12] px-3 shadow-inner shadow-black/20">
+                <Search className="h-4 w-4 text-[#5EF2C2]" />
+                <input className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-[#566273]" onChange={(event) => setQuery(event.target.value)} placeholder="搜索英雄名称，例如：关羽 / 公孙离 / 大司命" value={query} />
+              </label>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {roleFilters.map((role) => (
+                  <button
+                    className={(roleFilter === role ? "border-[#5EF2C2]/45 bg-[#5EF2C2]/12 text-[#DFFFF4]" : "border-white/10 bg-white/[0.035] text-[#8EA0B8]") + " rounded-[10px] border px-2.5 py-1.5 text-[11px] transition hover:border-white/25"}
+                    key={role}
+                    onClick={() => setRoleFilter(role)}
+                    type="button"
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-
-          <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="grid grid-cols-3 gap-2.5">
               {ordered.map((hero) => {
                 const reason = computed.disabledReason(hero);
                 const recommendation = computed.recommendedHeroes.find((item) => item.hero.id === hero.id);
                 const status = getHeroStatus(reason, recommendedIds.has(hero.id));
                 return <HeroCard disabled={Boolean(reason)} hero={hero} key={hero.id} onClick={() => selectHero(hero)} recommendation={recommendation} status={status} />;
               })}
+              </div>
             </div>
           </div>
         </>
@@ -688,30 +734,110 @@ function PredictionPanel({
 }
 
 function RecommendedHeroCard({ item, onClick }: { item: Recommendation; onClick: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const scoreTone = item.type === "ban" ? "text-[#FFCCD6]" : "text-[#CFFFEF]";
   return (
-    <button className="w-full rounded-[12px] border border-white/10 bg-[#0B111A]/70 p-2 text-left transition hover:-translate-y-0.5 hover:border-[#5EF2C2]/40" onClick={onClick} type="button">
-      <div className="flex gap-2">
-        <AssetImage alt={item.hero.name} className="h-11 w-11 shrink-0 rounded-full border border-white/10" fallback={item.hero.name.slice(0, 2)} src={item.hero.avatar} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold">{item.hero.name}</p>
-            <span className="rounded bg-[#5EF2C2] px-1.5 py-0.5 text-[10px] font-bold text-[#07111D]">推荐</span>
+    <div className="rounded-[12px] border border-white/10 bg-[#0B111A]/76 p-2 transition hover:border-[#5EF2C2]/40">
+      <button className="w-full text-left" onClick={onClick} type="button">
+        <div className="flex gap-2.5">
+          <AssetImage alt={item.hero.name} className="h-12 w-12 shrink-0 rounded-[14px] border border-white/10 object-cover" fallback={item.hero.name.slice(0, 2)} src={item.hero.avatar} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-semibold">{item.hero.name}</p>
+                  <span className="rounded bg-[#5EF2C2] px-1.5 py-0.5 text-[10px] font-bold text-[#07111D]">{item.type === "ban" ? "建议 Ban" : "建议 Pick"}</span>
+                </div>
+                <p className="mt-0.5 text-[11px] text-[#8EA0B8]">{item.hero.role}</p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className={`text-lg font-black ${scoreTone}`}>{item.totalScore}</p>
+                <p className="text-[10px] text-[#566273]">总分</p>
+              </div>
+            </div>
+            <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-[#AAB7C8]">{item.summary}</p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className={item.type === "ban" ? "h-full rounded-full bg-[#FF5C7A]" : "h-full rounded-full bg-[#5EF2C2]"} style={{ width: `${item.totalScore}%` }} />
+            </div>
           </div>
-          <p className="text-[11px] text-[#8EA0B8]">{item.hero.role}</p>
-          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[#8EA0B8]">{item.reason}</p>
         </div>
+      </button>
+      <button className="mt-2 text-[11px] font-semibold text-[#5EF2C2] hover:text-white" onClick={() => setExpanded((value) => !value)} type="button">
+        {expanded ? "收起评分依据" : "查看分项评分"}
+      </button>
+      {expanded ? <ScoreBreakdown item={item} /> : null}
+    </div>
+  );
+}
+
+function StrategyRules({ meta }: { meta: StrategyMeta }) {
+  const labels: Record<string, string> = {
+    versionStrength: "版本强度",
+    opponentUsage: "对手常用",
+    opponentWinRate: "对手胜率",
+    counterScore: "反制对手",
+    lineupFit: "阵容适配",
+    playerProficiency: "选手熟练度",
+  };
+  return (
+    <div className="mt-3 rounded-[12px] border border-white/10 bg-black/20 p-3">
+      <p className="text-[11px] leading-5 text-[#AAB7C8]">{meta.scoringRule}</p>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        {Object.entries(meta.weights).map(([key, value]) => (
+          <span className="rounded-[8px] bg-white/[0.045] px-2 py-1 text-[10px] text-[#CFE6F5]" key={key}>
+            {labels[key] || key} · {Math.round(value * 100)}%
+          </span>
+        ))}
       </div>
-    </button>
+    </div>
+  );
+}
+
+function ScoreBreakdown({ item }: { item: Recommendation }) {
+  const rows = item.type === "ban"
+    ? [
+        ["版本强度", item.breakdown.versionStrength],
+        ["对手常用", item.breakdown.opponentUsage],
+        ["对手胜率", item.breakdown.opponentWinRate || 0],
+      ]
+    : [
+        ["版本强度", item.breakdown.versionStrength],
+        ["反制对手", item.breakdown.opponentUsage],
+        ["对位克制", item.breakdown.counterScore || 0],
+        ["阵容适配", item.breakdown.lineupFit || 0],
+        ["选手熟练", item.breakdown.playerProficiency || 0],
+      ];
+  return (
+    <div className="mt-2 space-y-1.5 rounded-[10px] border border-white/10 bg-black/18 p-2">
+      {rows.map(([label, value]) => (
+        <div className="grid grid-cols-[64px_1fr_34px] items-center gap-2 text-[10px]" key={label}>
+          <span className="text-[#8EA0B8]">{label}</span>
+          <span className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <span className="block h-full rounded-full bg-[#5EF2C2]" style={{ width: `${value}%` }} />
+          </span>
+          <strong className="text-right text-[#EAF2FF]">{value}</strong>
+        </div>
+      ))}
+      <p className="pt-1 text-[10px] leading-4 text-[#8EA0B8]">策略说明：{item.summary}</p>
+    </div>
   );
 }
 
 function DraftSlot({ active, hero, label, side, size }: { active: boolean; hero?: HeroMeta; label: string; side: BpSide; size: "small" | "large" }) {
   const sideClass = side === "blue" ? "border-[#4AA3FF]/55" : "border-[#FF5C7A]/55";
+  if (size === "large") {
+    return (
+      <div className={(active ? "border-[#5EF2C2] bg-[#5EF2C2]/10 shadow-[0_0_22px_rgba(94,242,194,0.42)] animate-pulse" : hero ? sideClass + " bg-white/[0.04]" : "border-white/10 bg-white/[0.035]") + " min-h-[118px] rounded-[16px] border p-2 text-center transition"}>
+        <AssetImage alt={hero?.name || label} className="mx-auto h-16 w-16 rounded-[16px] border border-white/10 object-cover" fallback={hero?.name.slice(0, 2) || label} src={hero?.avatar} />
+        <p className="mt-2 truncate text-[11px] font-semibold text-[#EAF2FF]">{hero?.name || label}</p>
+        <p className="mt-1 text-[9px] text-[#8EA0B8]">{hero?.role || label}</p>
+      </div>
+    );
+  }
   return (
     <div className={(active ? "border-[#5EF2C2] bg-[#5EF2C2]/10 shadow-[0_0_18px_rgba(94,242,194,0.38)] animate-pulse" : hero ? sideClass : "border-white/10 bg-white/[0.035]") + " rounded-[12px] border p-1.5 text-center transition"}>
-      <AssetImage alt={hero?.name || label} className={(size === "large" ? "h-16 w-16" : "h-11 w-11") + " mx-auto rounded-full border border-white/10"} fallback={hero?.name.slice(0, 2) || label} src={hero?.avatar} />
+      <AssetImage alt={hero?.name || label} className="mx-auto h-11 w-11 rounded-full border border-white/10" fallback={hero?.name.slice(0, 2) || label} src={hero?.avatar} />
       <p className="mt-1 truncate text-[10px] text-[#EAF2FF]">{hero?.name || label}</p>
-      {hero && size === "large" ? <p className="text-[9px] text-[#8EA0B8]">{hero.role}</p> : null}
     </div>
   );
 }
@@ -722,7 +848,7 @@ function HeroCard({ disabled, hero, onClick, recommendation, status }: { disable
       className={(disabled ? "cursor-not-allowed border-white/5 bg-white/[0.02] opacity-45" : recommendation ? "border-[#5EF2C2]/45 bg-[#5EF2C2]/10 hover:-translate-y-0.5" : "border-white/10 bg-white/[0.035] hover:-translate-y-0.5 hover:border-white/25") + " group relative min-h-[132px] overflow-hidden rounded-[12px] border p-2 text-center transition"}
       disabled={disabled}
       onClick={onClick}
-      title={disabled ? status : recommendation?.reason || hero.name}
+      title={disabled ? status : recommendation?.summary || hero.name}
       type="button"
     >
       {recommendation ? <span className="absolute right-1.5 top-1.5 rounded bg-[#5EF2C2] px-1.5 py-0.5 text-[10px] font-bold text-[#07111D]">推荐</span> : null}
@@ -973,14 +1099,65 @@ function recommendHeroes({ currentStep, currentTeam, disabledReason, heroes, opp
   return heroes.filter((hero) => !disabledReason(hero)).map((hero) => {
     const ownPool = ownCounts.get(hero.name) || 0;
     const opponentPool = opponentCounts.get(hero.name) || 0;
-    const versionStrength = hero.strengthScore / 10;
-    const roleFit = currentStep.action === "pick" && roleNeeds.includes(hero.role) ? 8 : 2;
-    const systemFit = hero.tags.includes("高频") ? 5 : 2;
-    const counterScore = opponentBanCounts.get(hero.name) || 0;
-    const score = currentStep.action === "ban" ? opponentPool * 6 + versionStrength + counterScore * 2 + systemFit : ownPool * 5 + versionStrength + roleFit + systemFit;
-    const reason = currentStep.action === "ban" ? `${opponentTeam} 常用 ${hero.name}，版本强度 ${hero.strengthScore}，可压缩对手英雄池。` : `${currentTeam} 可选 ${hero.name}，补充${hero.role}位置，兼顾版本强度、英雄池与阵容缺口。`;
-    return { hero, score, reason, dimensions: ["版本强度", "选手英雄池", "阵容位置完整性", "体系适配", "对手常用英雄", "全局 BP 消耗"] };
-  }).sort((a, b) => b.score - a.score).slice(0, 8);
+    const opponentBanPressure = opponentBanCounts.get(hero.name) || 0;
+    const versionStrength = clampScore(hero.strengthScore);
+    const opponentUsage = clampScore(opponentPool * 26 + opponentBanPressure * 12 + (hero.tags.includes("高频") ? 10 : 0));
+    const opponentWinRate = clampScore(54 + opponentPool * 7 + versionStrength * 0.18);
+    const counterScore = clampScore(46 + opponentBanPressure * 12 + (hero.role === "打野" || hero.role === "中路" ? 10 : 4));
+    const lineupFit = clampScore((roleNeeds.includes(hero.role) ? 82 : 52) + (hero.tags.includes("高频") ? 8 : 0));
+    const playerProficiency = clampScore(hero.playerPoolScore + ownPool * 8);
+
+    if (currentStep.action === "ban") {
+      const totalScore = Math.round(
+        versionStrength * banScoreWeights.versionStrength +
+          opponentUsage * banScoreWeights.opponentUsage +
+          opponentWinRate * banScoreWeights.opponentWinRate,
+      );
+      return {
+        type: currentStep.action,
+        hero,
+        totalScore,
+        summary: `${hero.name} 当前版本优先级 ${versionStrength}，${opponentTeam} 使用压力 ${opponentUsage}，预估胜率表现 ${opponentWinRate}，Ban 价值较高。`,
+        breakdown: { versionStrength, opponentUsage, opponentWinRate },
+        dimensions: ["版本强度", "对手常用程度", "对手胜率表现"],
+      };
+    }
+
+    const totalScore = Math.round(
+      versionStrength * pickScoreWeights.versionStrength +
+        opponentUsage * pickScoreWeights.opponentUsage +
+        counterScore * pickScoreWeights.counterScore +
+        lineupFit * pickScoreWeights.lineupFit +
+        playerProficiency * pickScoreWeights.playerProficiency,
+    );
+    return {
+      type: currentStep.action,
+      hero,
+      totalScore,
+      summary: `${hero.name} 可补足${hero.role}位置，版本强度 ${versionStrength}，阵容适配 ${lineupFit}，同时具备对位反制与选手熟练度支撑。`,
+      breakdown: { versionStrength, opponentUsage, counterScore, lineupFit, playerProficiency },
+      dimensions: ["版本强度", "反制对手", "对位克制", "阵容适配", "选手熟练度"],
+    };
+  }).sort((a, b) => b.totalScore - a.totalScore).slice(0, 8);
+}
+
+function getStrategyMeta(mode: BpAction): StrategyMeta {
+  if (mode === "ban") {
+    return {
+      currentMode: mode,
+      scoringRule: "BanScore = 版本强度 * 0.40 + 对方常用 * 0.35 + 对方胜率 * 0.25。当前先使用 mock 结构，后续可接真实胜率与选手池。",
+      weights: banScoreWeights,
+    };
+  }
+  return {
+    currentMode: mode,
+    scoringRule: "PickScore = 版本强度 * 0.25 + 反制对手 * 0.20 + 对位克制 * 0.20 + 阵容适配 * 0.20 + 选手熟练度 * 0.15。",
+    weights: pickScoreWeights,
+  };
+}
+
+function clampScore(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 function getHeroStatus(reason: string, recommended: boolean): HeroStatus {
