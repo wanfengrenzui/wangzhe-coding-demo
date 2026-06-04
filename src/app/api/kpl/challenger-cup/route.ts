@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import summary from "@/data/kpl/challenger-cup-2026-summary.json";
+import viewDataset from "@/data/kpl/challenger-cup-2026-view.json";
 
 async function readJsonFile<T>(fileName: string) {
   const filePath = path.join(process.cwd(), "src", "data", "kpl", fileName);
@@ -42,7 +43,6 @@ export async function GET(request: Request) {
   }
 
   if (view === "ui") {
-    const viewDataset = await readJsonFile("challenger-cup-2026-view.json");
     return NextResponse.json(viewDataset);
   }
 
