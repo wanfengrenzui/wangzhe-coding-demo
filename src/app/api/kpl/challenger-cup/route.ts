@@ -3,9 +3,13 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import summary from "@/data/kpl/challenger-cup-2026-summary.json";
 
+async function readJsonFile<T>(fileName: string) {
+  const filePath = path.join(process.cwd(), "src", "data", "kpl", fileName);
+  return JSON.parse(await readFile(filePath, "utf8")) as T;
+}
+
 async function readDataset() {
-  const filePath = path.join(process.cwd(), "src", "data", "kpl", "challenger-cup-2026.json");
-  return JSON.parse(await readFile(filePath, "utf8")) as {
+  return readJsonFile<{
     matches: Array<{
       match_id: string;
       stage_desc: string;
@@ -25,7 +29,7 @@ async function readDataset() {
         source_url: string;
       }>;
     }>;
-  };
+  }>("challenger-cup-2026.json");
 }
 
 export async function GET(request: Request) {
@@ -35,6 +39,11 @@ export async function GET(request: Request) {
   if (view === "full") {
     const dataset = await readDataset();
     return NextResponse.json(dataset);
+  }
+
+  if (view === "ui") {
+    const viewDataset = await readJsonFile("challenger-cup-2026-view.json");
+    return NextResponse.json(viewDataset);
   }
 
   if (view === "matches") {

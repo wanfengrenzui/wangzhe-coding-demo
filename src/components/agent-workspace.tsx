@@ -24,7 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AssetImage } from "@/components/asset-image";
 import {
   getBo7RuleSnapshot,
@@ -35,7 +35,6 @@ import {
   type BpSide,
 } from "@/lib/kpl-bo7-rules";
 import challengerCupSummary from "@/data/kpl/challenger-cup-2026-summary.json";
-import challengerCupView from "@/data/kpl/challenger-cup-2026-view.json";
 import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
 import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
@@ -198,8 +197,6 @@ type OfficialViewDataset = {
   }>;
   matches: OfficialMatch[];
 };
-
-const officialKplDataset = challengerCupView as OfficialViewDataset;
 
 type DraftAnalysis = {
   blueScore: number;
@@ -1471,14 +1468,59 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function DatabasePanel() {
-  const featuredMatch =
-    officialKplDataset.matches.find((match) => match.match_id === "2026051501") ||
-    officialKplDataset.matches.find((match) => match.games.length > 0) ||
-    officialKplDataset.matches[0];
-  const [selectedMatchId, setSelectedMatchId] = useState(featuredMatch.match_id);
-  const [selectedGameNo, setSelectedGameNo] = useState(featuredMatch.games[0]?.game_no ?? 1);
+  const [officialData, setOfficialData] = useState<OfficialViewDataset | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState("2026051501");
+  const [selectedGameNo, setSelectedGameNo] = useState(1);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/kpl/challenger-cup?view=ui")
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json() as Promise<OfficialViewDataset>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setOfficialData(data);
+        const defaultMatch =
+          data.matches.find((match) => match.match_id === "2026051501") ||
+          data.matches.find((match) => match.games.length > 0) ||
+          data.matches[0];
+        if (defaultMatch) {
+          setSelectedMatchId(defaultMatch.match_id);
+          setSelectedGameNo(defaultMatch.games[0]?.game_no ?? 1);
+        }
+      })
+      .catch((error: Error) => {
+        if (!cancelled) setLoadError(error.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!officialData) {
+    return (
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-6">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-[#5EF2C2]" />
+          <div>
+            <h2 className="text-xl font-semibold">正在加载 2026 挑战者杯官方数据</h2>
+            <p className="mt-2 text-sm text-[#8EA0B8]">
+              已接入 {challengerCupSummary.summary.match_count} 场比赛、{challengerCupSummary.summary.game_count} 个小局、{challengerCupSummary.summary.bp_action_count} 条 BP 动作。
+            </p>
+            {loadError ? <p className="mt-2 text-sm text-[#FF9AAF]">加载失败：{loadError}</p> : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const selectedMatch =
-    officialKplDataset.matches.find((match) => match.match_id === selectedMatchId) || featuredMatch;
+    officialData.matches.find((match) => match.match_id === selectedMatchId) ||
+    officialData.matches.find((match) => match.games.length > 0) ||
+    officialData.matches[0];
   const selectedGame =
     selectedMatch.games.find((game) => game.game_no === selectedGameNo) ||
     selectedMatch.games[0];
@@ -1497,13 +1539,13 @@ function DatabasePanel() {
             <h2 className="font-semibold">2026 挑战者杯</h2>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
-            <MiniMetric label="比赛" value={officialKplDataset.summary.match_count} />
-            <MiniMetric label="小局" value={officialKplDataset.summary.game_count} />
-            <MiniMetric label="BP" value={officialKplDataset.summary.bp_action_count} />
+            <MiniMetric label="比赛" value={officialData.summary.match_count} />
+            <MiniMetric label="小局" value={officialData.summary.game_count} />
+            <MiniMetric label="BP" value={officialData.summary.bp_action_count} />
           </div>
         </div>
         <div className="max-h-[690px] space-y-2 overflow-y-auto p-3">
-          {officialKplDataset.matches.map((match) => {
+          {officialData.matches.map((match) => {
             const active = selectedMatch.match_id === match.match_id;
             return (
               <button
@@ -1538,7 +1580,7 @@ function DatabasePanel() {
         selectedGameNo={selectedGame?.game_no ?? 1}
         setSelectedGameNo={setSelectedGameNo}
       />
-      <OfficialHeroStatsPanel />
+      <OfficialHeroStatsPanel dataset={officialData} />
     </div>
   );
 }
@@ -1817,9 +1859,9 @@ function ResourceBar({ label, left, right }: { label: string; left: number; righ
   );
 }
 
-function OfficialHeroStatsPanel() {
-  const topPicked = officialKplDataset.hero_stats.slice(0, 8);
-  const topBanned = [...officialKplDataset.hero_stats].sort((a, b) => b.ban_count - a.ban_count).slice(0, 8);
+function OfficialHeroStatsPanel({ dataset }: { dataset: OfficialViewDataset }) {
+  const topPicked = dataset.hero_stats.slice(0, 8);
+  const topBanned = [...dataset.hero_stats].sort((a, b) => b.ban_count - a.ban_count).slice(0, 8);
   return (
     <section className="overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)]">
       <div className="border-b border-white/10 p-4">
