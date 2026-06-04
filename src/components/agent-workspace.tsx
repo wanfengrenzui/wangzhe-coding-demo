@@ -35,6 +35,7 @@ import {
   type BpSide,
 } from "@/lib/kpl-bo7-rules";
 import challengerCupSummary from "@/data/kpl/challenger-cup-2026-summary.json";
+import challengerCupView from "@/data/kpl/challenger-cup-2026-view.json";
 import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
 import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
@@ -107,6 +108,98 @@ type DraftComputed = {
   recommendedHeroes: Recommendation[];
   systemPrompt: string;
 };
+
+type OfficialTeam = {
+  id: string;
+  name: string;
+  abbreviation: string;
+  icon: string;
+  score?: number;
+  is_win?: boolean;
+};
+
+type OfficialHeroAction = {
+  hero_id: string;
+  hero_name: string;
+  hero_icon: string;
+  side: BpSide;
+  order: number;
+};
+
+type OfficialPick = {
+  side: BpSide;
+  team_name: string;
+  player_name: string;
+  actual_player_name: string;
+  player_icon: string;
+  hero_id: string;
+  hero_name: string;
+  hero_icon: string;
+  position_desc: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  kda: number;
+  gold: number;
+  participation_rate: number;
+  hurt_to_hero_total: number;
+  be_hurt_by_hero_total: number;
+  summoner_ability: { id: string; name: string; icon: string } | null;
+};
+
+type OfficialGame = {
+  battle_id: string;
+  game_no: number;
+  winner_side: BpSide | "unknown";
+  winner_team: string;
+  duration_seconds: number;
+  blue_team: OfficialTeam;
+  red_team: OfficialTeam;
+  bans: { blue: OfficialHeroAction[]; red: OfficialHeroAction[] };
+  picks: { blue: OfficialPick[]; red: OfficialPick[] };
+  bp_action_count: number;
+  source_url: string;
+};
+
+type OfficialMatch = {
+  match_id: string;
+  stage_desc: string;
+  bo: number;
+  start_time: string;
+  end_time: string;
+  blue_team: OfficialTeam;
+  red_team: OfficialTeam;
+  winner_side: BpSide | "unknown";
+  score: string;
+  source_url: string;
+  games: OfficialGame[];
+};
+
+type OfficialViewDataset = {
+  league_name: string;
+  summary: {
+    match_count: number;
+    game_count: number;
+    bp_action_count: number;
+    hero_count: number;
+    team_count: number;
+  };
+  hero_stats: Array<{
+    hero_id: string;
+    hero_name: string;
+    hero_icon: string;
+    battle_count: number;
+    pick_count: number;
+    pick_rate_percent: number;
+    ban_count: number;
+    ban_rate_percent: number;
+    victory_battle_count: number;
+    win_rate_percent: number;
+  }>;
+  matches: OfficialMatch[];
+};
+
+const officialKplDataset = challengerCupView as OfficialViewDataset;
 
 type DraftAnalysis = {
   blueScore: number;
@@ -1378,65 +1471,451 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function DatabasePanel() {
-  const [selectedId, setSelectedId] = useState(currentKplBpMatches[0].id);
-  const selected = currentKplBpMatches.find((match) => match.id === selectedId) || currentKplBpMatches[0];
+  const featuredMatch =
+    officialKplDataset.matches.find((match) => match.match_id === "2026051501") ||
+    officialKplDataset.matches.find((match) => match.games.length > 0) ||
+    officialKplDataset.matches[0];
+  const [selectedMatchId, setSelectedMatchId] = useState(featuredMatch.match_id);
+  const [selectedGameNo, setSelectedGameNo] = useState(featuredMatch.games[0]?.game_no ?? 1);
+  const selectedMatch =
+    officialKplDataset.matches.find((match) => match.match_id === selectedMatchId) || featuredMatch;
+  const selectedGame =
+    selectedMatch.games.find((game) => game.game_no === selectedGameNo) ||
+    selectedMatch.games[0];
+
+  function selectMatch(match: OfficialMatch) {
+    setSelectedMatchId(match.match_id);
+    setSelectedGameNo(match.games[0]?.game_no ?? 1);
+  }
+
   return (
-    <div className="grid gap-4 xl:grid-cols-[340px_1fr_360px]">
-      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
-        <div className="flex items-center gap-2"><Database className="h-4 w-4 text-[#5EF2C2]" /><h2 className="font-semibold">2026 BP 数据库</h2></div>
-        <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">已接入 2026 挑战者杯官方数据：{challengerCupSummary.summary.match_count} 场比赛、{challengerCupSummary.summary.game_count} 个小局、{challengerCupSummary.summary.bp_action_count} 条 BP 动作。下方保留人工样本用于当前交互 Demo，完整官方库见知识库 API。</p>
-        <div className="mt-4 max-h-[650px] space-y-2 overflow-y-auto pr-1">
-          {currentKplBpMatches.map((match) => (
-            <button className={(selected.id === match.id ? "border-[#5EF2C2]/60 bg-[#5EF2C2]/12" : "border-white/10 bg-white/[0.035] hover:border-white/25") + " w-full rounded-[12px] border p-3 text-left transition"} key={match.id} onClick={() => setSelectedId(match.id)} type="button">
-              <p className="text-sm font-semibold text-white">{match.blueTeam} vs {match.redTeam}</p>
-              <p className="mt-1 text-xs text-[#8EA0B8]">{match.date} / {match.game} / {match.result}</p>
-            </button>
-          ))}
+    <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_280px] 2xl:grid-cols-[300px_minmax(0,1fr)_300px]">
+      <section className="overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)]">
+        <div className="border-b border-white/10 p-4">
+          <div className="flex items-center gap-2">
+            <Database className="h-4 w-4 text-[#5EF2C2]" />
+            <h2 className="font-semibold">2026 挑战者杯</h2>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+            <MiniMetric label="比赛" value={officialKplDataset.summary.match_count} />
+            <MiniMetric label="小局" value={officialKplDataset.summary.game_count} />
+            <MiniMetric label="BP" value={officialKplDataset.summary.bp_action_count} />
+          </div>
+        </div>
+        <div className="max-h-[690px] space-y-2 overflow-y-auto p-3">
+          {officialKplDataset.matches.map((match) => {
+            const active = selectedMatch.match_id === match.match_id;
+            return (
+              <button
+                className={
+                  (active
+                    ? "border-[#5EF2C2]/60 bg-[#123936] shadow-[inset_3px_0_0_#5EF2C2]"
+                    : "border-white/10 bg-white/[0.035] hover:border-[#5EF2C2]/30 hover:bg-white/[0.06]") +
+                  " w-full rounded-[14px] border p-3 text-left transition"
+                }
+                key={match.match_id}
+                onClick={() => selectMatch(match)}
+                type="button"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-sm font-semibold text-white">
+                    {teamShortName(match.blue_team)} vs {teamShortName(match.red_team)}
+                  </p>
+                  <span className="rounded-[8px] bg-black/25 px-2 py-1 text-[11px] text-[#CFFFEF]">{match.score}</span>
+                </div>
+                <p className="mt-1 text-xs text-[#8EA0B8]">
+                  {formatShortDate(match.start_time)} / BO{match.bo} / {match.games.length} 局
+                </p>
+              </button>
+            );
+          })}
         </div>
       </section>
-      <MatchDetail match={selected} />
-      <TeamClusterPanel />
+
+      <OfficialMatchDetail
+        match={selectedMatch}
+        selectedGame={selectedGame}
+        selectedGameNo={selectedGame?.game_no ?? 1}
+        setSelectedGameNo={setSelectedGameNo}
+      />
+      <OfficialHeroStatsPanel />
     </div>
   );
 }
 
-function MatchDetail({ match }: { match: KplBpMatch }) {
-  const bluePicks = match.picks.filter((pick) => pick.side === "blue");
-  const redPicks = match.picks.filter((pick) => pick.side === "red");
+function MiniMetric({ label, value }: { label: string; value: number }) {
   return (
-    <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
-      <p className="text-xs uppercase tracking-[0.28em] text-[#5EF2C2]">Match Detail</p>
-      <h2 className="mt-2 text-2xl font-bold">{match.blueTeam} vs {match.redTeam}</h2>
-      <p className="mt-2 text-sm text-[#8EA0B8]">{match.stage} / {match.game} / {match.result}</p>
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <SideCard team={match.blueTeam} side="blue" bans={match.bans.blue} picks={bluePicks} />
-        <SideCard team={match.redTeam} side="red" bans={match.bans.red} picks={redPicks} />
+    <div className="rounded-[10px] border border-white/10 bg-black/20 px-2 py-2">
+      <p className="text-[#8EA0B8]">{label}</p>
+      <p className="mt-1 font-semibold text-[#5EF2C2]">{value}</p>
+    </div>
+  );
+}
+
+function OfficialMatchDetail({
+  match,
+  selectedGame,
+  selectedGameNo,
+  setSelectedGameNo,
+}: {
+  match: OfficialMatch;
+  selectedGame?: OfficialGame;
+  selectedGameNo: number;
+  setSelectedGameNo: (gameNo: number) => void;
+}) {
+  if (!selectedGame) {
+    return (
+      <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-6">
+        <p className="text-sm text-[#8EA0B8]">当前比赛暂无官方小局数据。</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)]">
+      <div className="relative border-b border-white/10 bg-[#0B111A] px-5 py-5">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-[#4AA3FF]/60 via-[#5EF2C2]/70 to-[#FF5C7A]/60" />
+        <p className="text-xs uppercase tracking-[0.3em] text-[#5EF2C2]">Official Match Detail</p>
+        <div className="mt-4 grid items-center gap-4 lg:grid-cols-[1fr_170px_1fr]">
+          <ScoreTeam team={match.blue_team} align="left" />
+          <div className="rounded-[16px] border border-white/10 bg-black/25 p-3 text-center">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-[#8EA0B8]">BO{match.bo}</p>
+            <p className="mt-1 text-4xl font-black tracking-wider text-white">{match.score}</p>
+            <p className="mt-1 text-[11px] text-[#8EA0B8]">{match.stage_desc}</p>
+          </div>
+          <ScoreTeam team={match.red_team} align="right" />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-[#8EA0B8]">
+            {formatDateTime(match.start_time)} · 当前第 {selectedGame.game_no} 局 · 胜方 {selectedGame.winner_team}
+          </p>
+          <a
+            className="rounded-[10px] border border-[#5EF2C2]/30 px-3 py-1.5 text-xs text-[#CFFFEF] transition hover:bg-[#5EF2C2]/10"
+            href={match.source_url}
+            rel="noreferrer"
+            target="_blank"
+          >
+            官方回溯
+          </a>
+        </div>
+      </div>
+
+      <div className="border-b border-white/10 px-5 py-3">
+        <div className="flex gap-2 overflow-x-auto">
+          {match.games.map((game) => (
+            <button
+              className={
+                (selectedGameNo === game.game_no
+                  ? "bg-[#5EF2C2] text-[#07111D]"
+                  : "border border-white/10 bg-white/[0.04] text-[#8EA0B8] hover:border-[#5EF2C2]/40 hover:text-white") +
+                " min-w-[58px] rounded-[10px] px-3 py-2 text-xs font-semibold transition"
+              }
+              key={game.battle_id}
+              onClick={() => setSelectedGameNo(game.game_no)}
+              type="button"
+            >
+              G{game.game_no}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className="grid gap-4 lg:grid-cols-[1fr_52px_1fr] 2xl:grid-cols-[1fr_72px_1fr]">
+          <OfficialSideBoard game={selectedGame} side="blue" team={selectedGame.blue_team} />
+          <div className="hidden items-center justify-center lg:flex">
+            <div className="rounded-full border border-[#5EF2C2]/35 bg-[#5EF2C2]/10 px-3 py-2 text-sm font-black text-[#CFFFEF]">VS</div>
+          </div>
+          <OfficialSideBoard game={selectedGame} side="red" team={selectedGame.red_team} />
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_260px] 2xl:grid-cols-[1fr_280px]">
+          <LaneMatchupPanel game={selectedGame} />
+          <GameResourcePanel game={selectedGame} />
+        </div>
       </div>
     </section>
   );
 }
 
-function SideCard({ bans, picks, side, team }: { bans: string[]; picks: KplBpMatch["picks"]; side: BpSide; team: string }) {
-  const tone = side === "blue" ? "border-[#4AA3FF]/25 bg-[#4AA3FF]/8" : "border-[#FF5C7A]/25 bg-[#FF5C7A]/8";
+function ScoreTeam({ align, team }: { align: "left" | "right"; team: OfficialTeam }) {
   return (
-    <div className={`rounded-[12px] border p-3 ${tone}`}>
-      <h3 className="font-semibold">{team}</h3>
-      <p className="mt-3 text-xs text-[#8EA0B8]">Ban</p>
-      <div className="mt-2 flex flex-wrap gap-1.5">{bans.length ? bans.map((hero) => <span className="rounded-[10px] border border-white/10 bg-black/20 px-2 py-1 text-xs" key={hero}>{hero}</span>) : <span className="text-xs text-[#8EA0B8]">巅峰对决无常规 Ban</span>}</div>
-      <p className="mt-3 text-xs text-[#8EA0B8]">Pick / 选手</p>
-      <div className="mt-2 space-y-1.5">{picks.map((pick) => <div className="grid grid-cols-[64px_1fr_72px] gap-2 rounded-[10px] bg-black/20 px-2 py-1.5 text-xs" key={pick.order}><span className="text-[#8EA0B8]">{pick.lane}</span><strong>{pick.player}</strong><span className="text-right text-[#5EF2C2]">{pick.hero}</span></div>)}</div>
+    <div className={(align === "right" ? "lg:flex-row-reverse lg:text-right" : "") + " flex items-center gap-3"}>
+      <AssetImage
+        alt={team.name}
+        className="h-16 w-16 rounded-[16px] border border-white/10 bg-[#0B111A] p-1 text-[10px] text-slate-300"
+        fallback={team.abbreviation || team.name.slice(0, 2)}
+        src={team.icon}
+      />
+      <div className="min-w-0">
+        <p className="truncate text-xl font-black text-white">{team.name}</p>
+        <p className="mt-1 text-xs text-[#8EA0B8]">{team.abbreviation || "TEAM"}</p>
+      </div>
     </div>
   );
 }
 
-function TeamClusterPanel() {
-  const teamCounts = getTeamHeroRows();
+function OfficialSideBoard({ game, side, team }: { game: OfficialGame; side: BpSide; team: OfficialTeam }) {
+  const isBlue = side === "blue";
+  const tone = isBlue
+    ? "border-[#4AA3FF]/30 bg-[#0F2134]"
+    : "border-[#FF5C7A]/30 bg-[#261722]";
+  const bans = game.bans[side];
+  const picks = game.picks[side];
   return (
-    <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
-      <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-[#5EF2C2]" /><h2 className="font-semibold">聚类准备</h2></div>
-      <div className="mt-4 space-y-3">{teamCounts.slice(0, 8).map((row) => <div className="rounded-[12px] border border-white/10 bg-white/[0.035] p-3" key={row.team}><p className="text-sm font-semibold">{row.team}</p><div className="mt-2 flex flex-wrap gap-1.5">{row.heroes.slice(0, 8).map(([hero, count]) => <span className="rounded-[10px] bg-black/25 px-2 py-1 text-[11px]" key={hero}>{hero} x{count}</span>)}</div></div>)}</div>
+    <div className={`rounded-[16px] border p-4 ${tone}`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <AssetImage
+            alt={team.name}
+            className="h-9 w-9 rounded-[10px] border border-white/10 bg-[#0B111A] p-1 text-[9px] text-slate-300"
+            fallback={team.abbreviation || team.name.slice(0, 2)}
+            src={team.icon}
+          />
+          <div className="min-w-0">
+            <h3 className={(isBlue ? "text-[#66B7FF]" : "text-[#FF6F8B]") + " truncate font-black"}>{team.name}</h3>
+            <p className="text-[11px] text-[#8EA0B8]">{team.is_win ? "本局胜方" : "本局阵容"}</p>
+          </div>
+        </div>
+        <span className="rounded-[10px] border border-white/10 bg-black/20 px-2 py-1 text-[11px] text-[#CFFFEF]">
+          BP {game.bp_action_count}
+        </span>
+      </div>
+
+      <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-[#8EA0B8]">Ban</p>
+      <div className="mt-2 grid grid-cols-5 gap-2">
+        {bans.slice(0, 5).map((ban, index) => (
+          <HeroMiniSlot hero={ban.hero_name} icon={ban.hero_icon} index={index + 1} key={`${ban.hero_id}-${index}`} mode="ban" />
+        ))}
+      </div>
+
+      <p className="mt-4 text-[11px] uppercase tracking-[0.18em] text-[#8EA0B8]">Pick / Player</p>
+      <div className="mt-2 space-y-2">
+        {sortPicksByLane(picks).map((pick) => (
+          <div className="grid grid-cols-[40px_1fr_auto] items-center gap-2 rounded-[12px] bg-black/20 px-2 py-2" key={`${pick.hero_id}-${pick.player_name}`}>
+            <AssetImage
+              alt={pick.hero_name}
+              className="h-10 w-10 rounded-[10px] border border-white/10 bg-[#0B111A] text-[10px] text-slate-300"
+              fallback={pick.hero_name.slice(0, 2)}
+              src={pick.hero_icon}
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{pick.hero_name}</p>
+              <p className="truncate text-[11px] text-[#8EA0B8]">{pick.position_desc} · {pick.player_name}</p>
+            </div>
+            <span className="rounded-[8px] bg-white/[0.06] px-2 py-1 text-[11px] text-[#5EF2C2]">
+              {pick.kills}/{pick.deaths}/{pick.assists}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroMiniSlot({ hero, icon, index, mode }: { hero: string; icon: string; index: number; mode: "ban" | "pick" }) {
+  return (
+    <div className="min-w-0 rounded-[10px] border border-white/10 bg-black/20 p-1 text-center">
+      <div className="relative mx-auto h-9 w-9 overflow-hidden rounded-[9px]">
+        <AssetImage alt={hero} className="h-full w-full bg-[#0B111A] text-[9px] text-slate-300" fallback={`B${index}`} src={icon} />
+        {mode === "ban" ? <span className="absolute inset-x-[-8px] top-1/2 h-px rotate-[-28deg] bg-[#FF5C7A]" /> : null}
+      </div>
+      <p className="mt-1 truncate text-[10px] text-slate-200">{hero}</p>
+    </div>
+  );
+}
+
+function LaneMatchupPanel({ game }: { game: OfficialGame }) {
+  const blue = sortPicksByLane(game.picks.blue);
+  const red = sortPicksByLane(game.picks.red);
+  return (
+    <div className="rounded-[16px] border border-white/10 bg-black/15 p-4">
+      <div className="flex items-center gap-2">
+        <Activity className="h-4 w-4 text-[#5EF2C2]" />
+        <h3 className="font-semibold">对位数据</h3>
+      </div>
+      <div className="mt-3 space-y-2">
+        {laneOrder.map((lane, index) => {
+          const left = blue.find((pick) => normalizeLaneName(pick.position_desc) === lane) || blue[index];
+          const right = red.find((pick) => normalizeLaneName(pick.position_desc) === lane) || red[index];
+          if (!left || !right) return null;
+          return <MatchupRow key={lane} lane={lane} left={left} right={right} />;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MatchupRow({ lane, left, right }: { lane: string; left: OfficialPick; right: OfficialPick }) {
+  return (
+    <div className="grid grid-cols-[1fr_70px_1fr] items-center gap-2 rounded-[12px] border border-white/10 bg-white/[0.035] p-2">
+      <CompactPlayer pick={left} side="blue" />
+      <div className="text-center">
+        <p className="text-[11px] text-[#8EA0B8]">{lane}</p>
+        <p className="mt-1 text-xs font-semibold text-[#5EF2C2]">{left.gold > right.gold ? "蓝优" : right.gold > left.gold ? "红优" : "均势"}</p>
+      </div>
+      <CompactPlayer pick={right} side="red" />
+    </div>
+  );
+}
+
+function CompactPlayer({ pick, side }: { pick: OfficialPick; side: BpSide }) {
+  return (
+    <div className={(side === "red" ? "flex-row-reverse text-right" : "") + " flex min-w-0 items-center gap-2"}>
+      <AssetImage alt={pick.hero_name} className="h-9 w-9 rounded-[9px] bg-[#0B111A] text-[9px] text-slate-300" fallback={pick.hero_name.slice(0, 2)} src={pick.hero_icon} />
+      <div className="min-w-0">
+        <p className="truncate text-xs font-semibold">{pick.hero_name}</p>
+        <p className="truncate text-[11px] text-[#8EA0B8]">{pick.player_name} · {formatNumber(pick.gold)}</p>
+      </div>
+    </div>
+  );
+}
+
+function GameResourcePanel({ game }: { game: OfficialGame }) {
+  const blueGold = sumGold(game.picks.blue);
+  const redGold = sumGold(game.picks.red);
+  const blueKills = sumKills(game.picks.blue);
+  const redKills = sumKills(game.picks.red);
+  const blueDamage = sumDamage(game.picks.blue);
+  const redDamage = sumDamage(game.picks.red);
+  return (
+    <div className="rounded-[16px] border border-white/10 bg-black/15 p-4">
+      <div className="flex items-center gap-2">
+        <BarChart3 className="h-4 w-4 text-[#5EF2C2]" />
+        <h3 className="font-semibold">本局概览</h3>
+      </div>
+      <div className="mt-4 space-y-4">
+        <ResourceBar label="总经济" left={blueGold} right={redGold} />
+        <ResourceBar label="击杀" left={blueKills} right={redKills} />
+        <ResourceBar label="英雄伤害" left={blueDamage} right={redDamage} />
+        <div className="rounded-[12px] border border-[#5EF2C2]/20 bg-[#5EF2C2]/8 p-3">
+          <p className="text-xs text-[#8EA0B8]">官方源</p>
+          <a className="mt-2 block break-all text-xs leading-5 text-[#CFFFEF] hover:underline" href={game.source_url} rel="noreferrer" target="_blank">
+            {game.source_url}
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourceBar({ label, left, right }: { label: string; left: number; right: number }) {
+  const total = Math.max(1, left + right);
+  const leftPercent = Math.round((left / total) * 100);
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[#66B7FF]">{formatNumber(left)}</span>
+        <span className="text-[#8EA0B8]">{label}</span>
+        <span className="text-[#FF6F8B]">{formatNumber(right)}</span>
+      </div>
+      <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-white/[0.08]">
+        <span className="bg-[#4AA3FF]" style={{ width: `${leftPercent}%` }} />
+        <span className="bg-[#FF5C7A]" style={{ width: `${100 - leftPercent}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function OfficialHeroStatsPanel() {
+  const topPicked = officialKplDataset.hero_stats.slice(0, 8);
+  const topBanned = [...officialKplDataset.hero_stats].sort((a, b) => b.ban_count - a.ban_count).slice(0, 8);
+  return (
+    <section className="overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)]">
+      <div className="border-b border-white/10 p-4">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-[#5EF2C2]" />
+          <h2 className="font-semibold">官方英雄榜</h2>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">来自 2026 挑战者杯英雄数据页，先用于数据集校验与后续聚类。</p>
+      </div>
+      <div className="max-h-[690px] overflow-y-auto p-4">
+        <HeroRankBlock title="出场优先级" rows={topPicked} metric="pick" />
+        <HeroRankBlock title="Ban 压力" rows={topBanned} metric="ban" />
+      </div>
     </section>
   );
+}
+
+function HeroRankBlock({ metric, rows, title }: { metric: "pick" | "ban"; rows: OfficialViewDataset["hero_stats"]; title: string }) {
+  return (
+    <div className="mb-5 last:mb-0">
+      <p className="text-xs uppercase tracking-[0.24em] text-[#5EF2C2]">{title}</p>
+      <div className="mt-3 space-y-2">
+        {rows.map((hero, index) => (
+          <div className="grid grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[12px] border border-white/10 bg-white/[0.035] p-2" key={`${title}-${hero.hero_id}`}>
+            <span className="text-center text-xs font-semibold text-[#8EA0B8]">{index + 1}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <AssetImage alt={hero.hero_name} className="h-9 w-9 rounded-[10px] bg-[#0B111A] text-[9px] text-slate-300" fallback={hero.hero_name.slice(0, 2)} src={hero.hero_icon} />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{hero.hero_name}</p>
+                <p className="text-[11px] text-[#8EA0B8]">胜率 {formatPercent(hero.win_rate_percent)}</p>
+              </div>
+            </div>
+            <span className="rounded-[9px] bg-black/25 px-2 py-1 text-[11px] text-[#CFFFEF]">
+              {metric === "pick" ? `${hero.battle_count} 场` : `${hero.ban_count} Ban`}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const laneOrder = ["对抗路", "打野", "中路", "发育路", "游走"];
+
+function teamShortName(team: OfficialTeam) {
+  return team.abbreviation || team.name;
+}
+
+function formatShortDate(value: string) {
+  return value ? value.slice(5, 10) : "TBD";
+}
+
+function formatDateTime(value: string) {
+  if (!value) return "时间待定";
+  return value.slice(0, 16);
+}
+
+function formatNumber(value: number) {
+  if (!Number.isFinite(value)) return "0";
+  if (Math.abs(value) >= 10000) return `${(value / 10000).toFixed(1)}w`;
+  if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
+function formatPercent(value: number) {
+  if (!Number.isFinite(value)) return "0%";
+  return `${value.toFixed(1)}%`;
+}
+
+function normalizeLaneName(value: string) {
+  if (value.includes("对抗") || value.includes("上路")) return "对抗路";
+  if (value.includes("打野")) return "打野";
+  if (value.includes("中")) return "中路";
+  if (value.includes("发育") || value.includes("下路")) return "发育路";
+  if (value.includes("游走") || value.includes("辅助")) return "游走";
+  return value || "未知";
+}
+
+function sortPicksByLane(picks: OfficialPick[]) {
+  return [...picks].sort((a, b) => {
+    const aIndex = laneOrder.indexOf(normalizeLaneName(a.position_desc));
+    const bIndex = laneOrder.indexOf(normalizeLaneName(b.position_desc));
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+  });
+}
+
+function sumGold(picks: OfficialPick[]) {
+  return picks.reduce((sum, pick) => sum + pick.gold, 0);
+}
+
+function sumKills(picks: OfficialPick[]) {
+  return picks.reduce((sum, pick) => sum + pick.kills, 0);
+}
+
+function sumDamage(picks: OfficialPick[]) {
+  return picks.reduce((sum, pick) => sum + pick.hurt_to_hero_total, 0);
 }
 
 function useDraftComputed(state: DraftState, heroes: HeroMeta[], query: string, roleFilter: HeroRole | "全部"): DraftComputed & { availableHeroes: HeroMeta[] } {

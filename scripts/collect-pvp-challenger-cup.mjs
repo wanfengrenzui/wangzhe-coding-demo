@@ -4,6 +4,7 @@ import path from "node:path";
 const DEFAULT_LEAGUE_ID = "20260002";
 const DEFAULT_OUT = "src/data/kpl/challenger-cup-2026.json";
 const DEFAULT_SUMMARY_OUT = "src/data/kpl/challenger-cup-2026-summary.json";
+const DEFAULT_VIEW_OUT = "src/data/kpl/challenger-cup-2026-view.json";
 const API_BASE = "https://prod.comp.smoba.qq.com/leaguesite";
 const PVP_BASE = "https://pvp.qq.com/matchdata";
 
@@ -228,6 +229,96 @@ function normalizeMatch(match, battles, leagueId) {
   };
 }
 
+function compactHero(item) {
+  return {
+    hero_id: item.hero_id,
+    hero_name: item.hero_name,
+    hero_icon: item.hero_icon,
+    side: item.side,
+    order: item.order,
+  };
+}
+
+function compactPick(player) {
+  return {
+    side: player.side,
+    team_name: player.team_name,
+    player_name: player.player_name,
+    actual_player_name: player.actual_player_name,
+    player_icon: player.player_icon,
+    hero_id: player.hero_id,
+    hero_name: player.hero_name,
+    hero_icon: player.hero_icon,
+    position_desc: player.position_desc,
+    kills: player.kills,
+    deaths: player.deaths,
+    assists: player.assists,
+    kda: player.kda,
+    gold: player.gold,
+    participation_rate: player.participation_rate,
+    hurt_to_hero_total: player.hurt_to_hero_total,
+    be_hurt_by_hero_total: player.be_hurt_by_hero_total,
+    summoner_ability: player.summoner_ability,
+  };
+}
+
+function buildViewDataset(dataset) {
+  return {
+    dataset_id: dataset.dataset_id,
+    league_id: dataset.league_id,
+    league_name: dataset.league_name,
+    source_level: dataset.source_level,
+    collected_at: dataset.collected_at,
+    source_pages: dataset.source_pages,
+    summary: dataset.summary,
+    hero_stats: dataset.hero_stats
+      .map((hero) => ({
+        hero_id: hero.hero_id,
+        hero_name: hero.hero_name,
+        hero_icon: hero.hero_icon,
+        battle_count: hero.battle_count,
+        pick_count: hero.pick_count,
+        pick_rate_percent: hero.pick_rate_percent,
+        ban_count: hero.ban_count,
+        ban_rate_percent: hero.ban_rate_percent,
+        victory_battle_count: hero.victory_battle_count,
+        win_rate_percent: hero.win_rate_percent,
+      }))
+      .sort((a, b) => b.battle_count - a.battle_count),
+    matches: dataset.matches.map((match) => ({
+      match_id: match.match_id,
+      stage_desc: match.stage_desc,
+      bo: match.bo,
+      start_time: match.start_time,
+      end_time: match.end_time,
+      blue_team: match.blue_team,
+      red_team: match.red_team,
+      winner_side: match.winner_side,
+      score: match.score,
+      source_url: match.source_url,
+      games: match.games.map((game) => ({
+        battle_id: game.battle_id,
+        game_no: game.game_no,
+        winner_side: game.winner_side,
+        winner_team: game.winner_team,
+        duration_seconds: game.duration_seconds,
+        blue_team: game.blue_team,
+        red_team: game.red_team,
+        bans: {
+          blue: game.bans.blue.map(compactHero),
+          red: game.bans.red.map(compactHero),
+        },
+        picks: {
+          blue: game.picks.blue.map(compactPick),
+          red: game.picks.red.map(compactPick),
+        },
+        bp_action_count: game.bp_actions.length,
+        source_url: game.source_url,
+      })),
+    })),
+  };
+}
+
 function summarize(matches, heroStats) {
   const games = matches.flatMap((match) => match.games);
   const bpActionCount = games.reduce((sum, game) => sum + game.bp_actions.length, 0);
@@ -327,6 +418,7 @@ async function main() {
   const leagueId = getArg("--league-id", DEFAULT_LEAGUE_ID);
   const outPath = path.resolve(getArg("--out", DEFAULT_OUT));
   const summaryOutPath = path.resolve(getArg("--summary-out", DEFAULT_SUMMARY_OUT));
+  const viewOutPath = path.resolve(getArg("--view-out", DEFAULT_VIEW_OUT));
   const dataset = await collectLeague(leagueId);
   await mkdir(path.dirname(outPath), { recursive: true });
   await writeFile(outPath, `${JSON.stringify(dataset, null, 2)}\n`, "utf8");
@@ -349,9 +441,11 @@ async function main() {
     )}\n`,
     "utf8",
   );
+  await mkdir(path.dirname(viewOutPath), { recursive: true });
+  await writeFile(viewOutPath, `${JSON.stringify(buildViewDataset(dataset), null, 2)}\n`, "utf8");
   process.stdout.write(
     JSON.stringify(
-      { outPath, summaryOutPath, summary: dataset.summary, errors: dataset.crawl_errors.length },
+      { outPath, summaryOutPath, viewOutPath, summary: dataset.summary, errors: dataset.crawl_errors.length },
       null,
       2,
     ),

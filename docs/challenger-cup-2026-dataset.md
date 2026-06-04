@@ -18,6 +18,7 @@ This dataset is collected from Tencent PVP official match data for `league_id=20
 
 - Full dataset: `src/data/kpl/challenger-cup-2026.json`
 - Lightweight summary: `src/data/kpl/challenger-cup-2026-summary.json`
+- Frontend view dataset: `src/data/kpl/challenger-cup-2026-view.json`
 - API summary: `/api/kpl/challenger-cup`
 - API match index: `/api/kpl/challenger-cup?view=matches`
 - API full dataset: `/api/kpl/challenger-cup?view=full`
