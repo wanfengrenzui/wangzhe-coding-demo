@@ -676,7 +676,7 @@ function TeamDraftBoard({
         <span>Ban 位</span>
         <span>{banSlotsPerTeam} slots</span>
       </div>
-      <div className="mt-3 grid grid-cols-4 justify-center gap-3">
+      <div className="mt-3 grid grid-cols-4 gap-3">
         {Array.from({ length: banSlotsPerTeam }, (_, index) => (
           <BanSlot active={activeStep?.side === side && activeStep.action === "ban" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "ban", index + 1)} key={index} label={`B${index + 1}`} side={side} />
         ))}
@@ -685,7 +685,7 @@ function TeamDraftBoard({
         <span>Pick 位</span>
         <span>{pickSlotsPerTeam} slots</span>
       </div>
-      <div className="mt-3 grid grid-cols-5 justify-center gap-3">
+      <div className="mt-3 grid grid-cols-5 gap-3">
         {Array.from({ length: pickSlotsPerTeam }, (_, index) => (
           <PickSlot active={activeStep?.side === side && activeStep.action === "pick" && activeStep.slot === index + 1} hero={getActionHero(actions, heroes, side, "pick", index + 1)} key={index} label={`P${index + 1}`} side={side} />
         ))}
@@ -916,7 +916,7 @@ function PickSlot({ active, hero, label, side }: { active: boolean; hero?: HeroM
   const activeClass = "border-[#5EF2C2] bg-[#5EF2C2]/12 shadow-[0_0_18px_rgba(94,242,194,0.34)] animate-pulse";
   const emptyClass = "border-white/10 bg-white/[0.035]";
   return (
-    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative grid h-[clamp(108px,6.15vw,118px)] w-[clamp(72px,4.6vw,88px)] grid-rows-[1fr_34px] overflow-hidden rounded-[16px] border text-center transition"}>
+    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : emptyClass) + " relative grid h-[118px] w-full min-w-0 grid-rows-[1fr_34px] overflow-hidden rounded-[16px] border text-center transition"}>
       {active ? <span className="absolute right-1.5 top-1.5 z-10 rounded-[8px] bg-[#5EF2C2]/18 px-1.5 py-0.5 text-[9px] font-semibold text-[#CFFFEF]">当前</span> : null}
       {hero ? (
         <>
@@ -942,7 +942,7 @@ function BanSlot({ active, hero, label, side }: { active: boolean; hero?: HeroMe
   const sideClass = side === "blue" ? "border-[#4AA3FF]/55 shadow-[0_0_14px_rgba(74,163,255,0.1)]" : "border-[#FF5C7A]/55 shadow-[0_0_14px_rgba(255,92,122,0.1)]";
   const activeClass = "border-[#5EF2C2] bg-[#5EF2C2]/12 shadow-[0_0_16px_rgba(94,242,194,0.32)] animate-pulse";
   return (
-    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : "border-white/10 bg-white/[0.035]") + " relative grid h-[clamp(78px,4.6vw,88px)] w-[clamp(60px,3.75vw,72px)] grid-rows-[1fr_24px] overflow-hidden rounded-[14px] border text-center transition"}>
+    <div className={(active ? activeClass : hero ? `${sideClass} bg-white/[0.045]` : "border-white/10 bg-white/[0.035]") + " relative grid h-[88px] w-full min-w-0 grid-rows-[1fr_24px] overflow-hidden rounded-[14px] border text-center transition"}>
       {active ? <span className="absolute right-1 top-1 z-10 rounded-[7px] bg-[#5EF2C2]/18 px-1 py-0.5 text-[8px] font-semibold text-[#CFFFEF]">当前</span> : null}
       {hero ? (
         <>
