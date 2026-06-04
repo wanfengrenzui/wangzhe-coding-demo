@@ -4,7 +4,7 @@ import path from "node:path";
 const DEFAULT_LEAGUE_ID = "20260002";
 const DEFAULT_OUT = "src/data/kpl/challenger-cup-2026.json";
 const DEFAULT_SUMMARY_OUT = "src/data/kpl/challenger-cup-2026-summary.json";
-const DEFAULT_VIEW_OUT = "src/data/kpl/challenger-cup-2026-view.json";
+const DEFAULT_VIEW_OUT = "public/data/kpl/challenger-cup-2026-view.json";
 const API_BASE = "https://prod.comp.smoba.qq.com/leaguesite";
 const PVP_BASE = "https://pvp.qq.com/matchdata";
 

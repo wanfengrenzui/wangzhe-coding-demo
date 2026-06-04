@@ -1475,7 +1475,7 @@ function DatabasePanel() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/kpl/challenger-cup?view=ui")
+    fetch("/data/kpl/challenger-cup-2026-view.json")
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json() as Promise<OfficialViewDataset>;
