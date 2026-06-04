@@ -39,7 +39,7 @@ import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
 import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
 
-type TabKey = "agent" | "database" | "bp-predict" | "content" | "knowledge" | "feedback" | "evaluation";
+type TabKey = "agent" | "database" | "bp-predict" | "content" | "knowledge" | "feedback" | "evaluation" | "bp-strategy";
 type HeroRole = "对抗路" | "打野" | "中路" | "发育路" | "游走" | "综合";
 type HeroStatus = "可选" | "推荐" | "当前局已禁用" | "当前局已选择" | "全局 BP 不可用" | "BP 已完成";
 
@@ -217,6 +217,7 @@ const tabs: Array<{ key: TabKey; label: string; hint: string }> = [
   { key: "knowledge", label: "英雄资料库", hint: "英雄 / 装备" },
   { key: "feedback", label: "玩家反馈分析", hint: "论坛情绪" },
   { key: "evaluation", label: "模型效果评估", hint: "样本 / 权重" },
+  { key: "bp-strategy", label: "BP策略", hint: "待规划" },
 ];
 
 const roleByHero: Record<string, HeroRole> = {
@@ -352,8 +353,8 @@ export function AgentWorkspace() {
   }
 
   return (
-    <main className="min-h-screen bg-[#070B12] text-[#EAF2FF]">
-      <header className="border-b border-white/10 bg-[#0B111A]/95 backdrop-blur">
+    <main className="kpl-page-shell min-h-screen text-[#EAF2FF]">
+      <header className="border-b border-white/10 bg-[#0B111A]/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1500px] flex-col gap-4 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.34em] text-[#5EF2C2]">KPL HUB</p>
@@ -388,10 +389,23 @@ export function AgentWorkspace() {
         {activeTab === "knowledge" ? <KnowledgePanel /> : null}
         {activeTab === "feedback" ? <FeedbackPanel /> : null}
         {activeTab === "evaluation" ? <EvaluationPanel /> : null}
+        {activeTab === "bp-strategy" ? <BpStrategyPanel /> : null}
       </div>
 
       {isDraftOpen ? <BpDraftModal key={draftSeed} onClose={() => setIsDraftOpen(false)} /> : null}
     </main>
+  );
+}
+
+function BpStrategyPanel() {
+  return (
+    <section className="rounded-[20px] border border-[#5EF2C2]/25 bg-[rgba(18,27,40,0.78)] p-6 shadow-[0_0_48px_rgba(94,242,194,0.1)] backdrop-blur-md">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#5EF2C2]">BP Strategy</p>
+      <h2 className="mt-4 text-3xl font-bold">BP策略</h2>
+      <p className="mt-3 max-w-3xl text-sm leading-7 text-[#B7C7DD]">
+        这里先作为独立功能入口保留。后续可以承载策略库、战队偏好、蓝红方响应模型、Ban/Pick 规则权重和对局复盘模板。
+      </p>
+    </section>
   );
 }
 
