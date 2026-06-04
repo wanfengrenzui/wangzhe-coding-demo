@@ -1,0 +1,222 @@
+{
+  "dataset_id": "pvp-official-20260002",
+  "league_id": "20260002",
+  "league_name": "2026年挑战者杯",
+  "source_level": "official",
+  "collected_at": "2026-06-04T02:32:52.274Z",
+  "source_pages": {
+    "hero_data": "https://pvp.qq.com/matchdata/heroData.html?league_id=20260002",
+    "schedule_details_template": "https://pvp.qq.com/matchdata/scheduleDetails.html?league_id=20260002&match_id={match_id}"
+  },
+  "summary": {
+    "hero_count": 95,
+    "match_count": 38,
+    "finished_match_count": 38,
+    "game_count": 188,
+    "bp_action_count": 3698,
+    "bp_action_length_distribution": {
+      "6": 1,
+      "7": 1,
+      "8": 2,
+      "10": 1,
+      "19": 1,
+      "20": 182
+    },
+    "team_count": 32,
+    "teams": [
+      {
+        "id": "12403",
+        "name": "阿里巴巴PKQ",
+        "abbreviation": "阿里巴巴PKQ",
+        "icon": "https://smobatv-pic.tga.qq.com/bae16422b3e9148dc176bb857cf7de03.png"
+      },
+      {
+        "id": "10020",
+        "name": "北京JDG",
+        "abbreviation": "JDG",
+        "icon": "https://smhtv-pic.tga.qq.com/bc18df69dd91643409c09a3503737cb3.png"
+      },
+      {
+        "id": "10003",
+        "name": "北京WB",
+        "abbreviation": "WB",
+        "icon": "https://smhtv-pic.tga.qq.com/75b41b2357febfa17764f8bc1f423d2c.png"
+      },
+      {
+        "id": "12409",
+        "name": "吵一吵",
+        "abbreviation": "吵一吵",
+        "icon": "https://smobatv-pic.tga.qq.com/d5959e2de10277b88612d4b2f1677b0a.png"
+      },
+      {
+        "id": "10027",
+        "name": "成都AG超玩会",
+        "abbreviation": "AG",
+        "icon": "https://smhtv-pic.tga.qq.com/02e0582db3b0766ad6fab97e95743e6c.png"
+      },
+      {
+        "id": "12402",
+        "name": "重庆科技大学",
+        "abbreviation": "重庆科技大学",
+        "icon": "https://smobatv-pic.tga.qq.com/bc8e1e29f9fdf24468d9f8a87fd7047f.png"
+      },
+      {
+        "id": "10001",
+        "name": "重庆狼队",
+        "abbreviation": "狼队",
+        "icon": "https://smhtv-pic.tga.qq.com/a85f1428dd1ef3eaeeb5e203f17b9b25.png"
+      },
+      {
+        "id": "10016",
+        "name": "佛山DRG",
+        "abbreviation": "DRG",
+        "icon": "https://smhtv-pic.tga.qq.com/ce1bd06e864b727f98676ef12a956e9f.png"
+      },
+      {
+        "id": "10017",
+        "name": "广州TTG",
+        "abbreviation": "TTG",
+        "icon": "https://smhtv-pic.tga.qq.com/0a05fdfba20fa3823db5c8c44fae6abe.png"
+      },
+      {
+        "id": "10031",
+        "name": "杭州LGD.NBW",
+        "abbreviation": "LGD",
+        "icon": "https://smhtv-pic.tga.qq.com/a29bcb1a579369888cc9a87637274822.png"
+      },
+      {
+        "id": "12410",
+        "name": "好厚米",
+        "abbreviation": "好厚米",
+        "icon": "https://smobatv-pic.tga.qq.com/514be0f3714547d1ab67b341bc259fda.png"
+      },
+      {
+        "id": "10018",
+        "name": "济南RW侠",
+        "abbreviation": "RW侠",
+        "icon": "https://smobatv-pic.tga.qq.com/11ba263f0d5d6fd422c4efb14df3ad62.png"
+      },
+      {
+        "id": "10007",
+        "name": "南通Hero久竞",
+        "abbreviation": "Hero",
+        "icon": "https://smhtv-pic.tga.qq.com/85b4fe06e4a722bd5435676bd9ff1384.png"
+      },
+      {
+        "id": "12401",
+        "name": "青训潜渊",
+        "abbreviation": "青训潜渊",
+        "icon": "https://smobatv-pic.tga.qq.com/ec90dbb1920060e848bbc745a39e8647.png"
+      },
+      {
+        "id": "10002",
+        "name": "上海EDG.M",
+        "abbreviation": "EDG.M",
+        "icon": "https://smhtv-pic.tga.qq.com/7209fb2509e991052852dd872981c8f3.png"
+      },
+      {
+        "id": "10009",
+        "name": "上海RNG.M",
+        "abbreviation": "RNG.M",
+        "icon": "https://smhtv-pic.tga.qq.com/c2dfe93f6e1cabb13512d3fb42d94051.png"
+      },
+      {
+        "id": "10008",
+        "name": "深圳DYG",
+        "abbreviation": "DYG",
+        "icon": "https://smhtv-pic.tga.qq.com/221a9ffe2de016e02e146465ed57ce73.png"
+      },
+      {
+        "id": "10903",
+        "name": "桐乡情久",
+        "abbreviation": "情久",
+        "icon": "https://smhtv-pic.tga.qq.com/f4fc888e840157eaa4bc7b261f71e835.png"
+      },
+      {
+        "id": "10601",
+        "name": "无锡TCG",
+        "abbreviation": "TCG",
+        "icon": "https://smhtv-pic.tga.qq.com/b271c7d4e606561873604b2f58bcac7d.png"
+      },
+      {
+        "id": "10006",
+        "name": "武汉eStarPro",
+        "abbreviation": "ES",
+        "icon": "https://smobatv-pic.tga.qq.com/ad7441d6a83f41e0efe1dbd23d9bacad.png"
+      },
+      {
+        "id": "10010",
+        "name": "西安WE",
+        "abbreviation": "WE",
+        "icon": "https://smhtv-pic.tga.qq.com/e4fa78585a052b912d092287814c779b.png"
+      },
+      {
+        "id": "10028",
+        "name": "长沙TES.A",
+        "abbreviation": "TES.A",
+        "icon": "https://smhtv-pic.tga.qq.com/48f18204fa257197ec49bb6345d14a33.png"
+      },
+      {
+        "id": "12407",
+        "name": "BOOM",
+        "abbreviation": "BOOM",
+        "icon": "https://smobatv-pic.tga.qq.com/6ab31e86bb8d8db904518bd05d942f8d.png"
+      },
+      {
+        "id": "12408",
+        "name": "BTR",
+        "abbreviation": "BTR",
+        "icon": "https://smobatv-pic.tga.qq.com/8b1986ae9789a75bb1fec25b23f807ff.png"
+      },
+      {
+        "id": "12405",
+        "name": "GKE",
+        "abbreviation": "GKE",
+        "icon": "https://smobatv-pic.tga.qq.com/ead9f779314e86fd655016e26745085a.png"
+      },
+      {
+        "id": "10005",
+        "name": "KSG",
+        "abbreviation": "KSG",
+        "icon": "https://smobatv-pic.tga.qq.com/e7f3ca48aa29a89c5cf7e04d7f83534f.png"
+      },
+      {
+        "id": "10905",
+        "name": "LTG",
+        "abbreviation": "LTG",
+        "icon": "https://smobatv-pic.tga.qq.com/9382249350922f6c8424079d4bf46071.png"
+      },
+      {
+        "id": "12202",
+        "name": "SYG",
+        "abbreviation": "SYG",
+        "icon": "https://smobatv-pic.tga.qq.com/3eaef9a24b7181b25951d54a1a13bfe0.png"
+      },
+      {
+        "id": "12411",
+        "name": "WG",
+        "abbreviation": "WG",
+        "icon": "https://smobatv-pic.tga.qq.com/a4bb4c6a8d9d0c700e690499e99cfe28.png"
+      },
+      {
+        "id": "10910",
+        "name": "WST",
+        "abbreviation": "WST",
+        "icon": "https://smobatv-pic.tga.qq.com/819cba4c185dbb7dd75a1827058043bb.png"
+      },
+      {
+        "id": "12404",
+        "name": "ZDC",
+        "abbreviation": "ZDC",
+        "icon": "https://smobatv-pic.tga.qq.com/9ae79e891ce036c058a746e6b1067619.png"
+      },
+      {
+        "id": "12406",
+        "name": "ZJQ",
+        "abbreviation": "ZJQ",
+        "icon": "https://smobatv-pic.tga.qq.com/8e755c6d8da069e0f70232d739ba7031.png"
+      }
+    ]
+  },
+  "crawl_error_count": 0
+}

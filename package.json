@@ -8,6 +8,7 @@
     "collect:bili-draft": "node scripts/collect-bili-draft-frames.mjs",
     "collect:kpl-bp": "node scripts/collect-kpl-bp.mjs",
     "collect:kpl-official": "node scripts/collect-kpl-official.mjs",
+    "collect:pvp-challenger": "node scripts/collect-pvp-challenger-cup.mjs",
     "start": "node node_modules/next/dist/bin/next start",
     "lint": "eslint"
   },

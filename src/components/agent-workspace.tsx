@@ -34,6 +34,7 @@ import {
   type BpAction,
   type BpSide,
 } from "@/lib/kpl-bo7-rules";
+import challengerCupSummary from "@/data/kpl/challenger-cup-2026-summary.json";
 import { currentKplBpMatches, type KplBpMatch } from "@/lib/kpl-bp-data";
 import { kplHeroCatalog } from "@/lib/kpl-hero-catalog";
 import type { AgentRunResult, AgentStep } from "@/lib/agent-types";
@@ -254,10 +255,6 @@ export function AgentWorkspace() {
   const [activeTab, setActiveTab] = useState<TabKey>("bp-predict");
   const [isDraftOpen, setIsDraftOpen] = useState(false);
   const [draftSeed, setDraftSeed] = useState(0);
-  const totalTeams = useMemo(
-    () => new Set(currentKplBpMatches.flatMap((match) => [match.blueTeam, match.redTeam])).size,
-    [],
-  );
 
   function openDraft() {
     setDraftSeed((value) => value + 1);
@@ -296,9 +293,7 @@ export function AgentWorkspace() {
       <div className="mx-auto max-w-[1500px] px-6 py-6">
         {activeTab === "agent" ? <AgentPanel /> : null}
         {activeTab === "database" ? <DatabasePanel /> : null}
-        {activeTab === "bp-predict" ? (
-          <BpLandingPanel onOpenDraft={openDraft} totalHeroes={kplHeroCatalog.length} totalTeams={totalTeams} />
-        ) : null}
+        {activeTab === "bp-predict" ? <BpLandingPanel onOpenDraft={openDraft} /> : null}
         {activeTab === "content" ? <ContentPanel /> : null}
         {activeTab === "knowledge" ? <KnowledgePanel /> : null}
         {activeTab === "feedback" ? <FeedbackPanel /> : null}
@@ -312,12 +307,8 @@ export function AgentWorkspace() {
 
 function BpLandingPanel({
   onOpenDraft,
-  totalHeroes,
-  totalTeams,
 }: {
   onOpenDraft: () => void;
-  totalHeroes: number;
-  totalTeams: number;
 }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
@@ -336,9 +327,9 @@ function BpLandingPanel({
           >
             开始 BP 预测
           </button>
-          <Stat label="BP 样本" value={`${currentKplBpMatches.length} 局`} />
-          <Stat label="覆盖战队" value={`${totalTeams} 支`} />
-          <Stat label="英雄目录" value={`${totalHeroes} 个`} />
+          <Stat label="官方小局" value={`${challengerCupSummary.summary.game_count} 局`} />
+          <Stat label="覆盖战队" value={`${challengerCupSummary.summary.team_count} 支`} />
+          <Stat label="英雄统计" value={`${challengerCupSummary.summary.hero_count} 个`} />
         </div>
       </section>
 
@@ -1266,7 +1257,7 @@ function KnowledgePanel() {
   return (
     <DashboardShell eyebrow="Knowledge" title="英雄资料库" description="英雄、装备、铭文、技能和 KPL 解说语料仍保留为资料入口。">
       <div className="grid gap-3 md:grid-cols-3">
-        {[["英雄目录", `${kplHeroCatalog.length} 个英雄`, "/knowledge/heroes"], ["装备资料", "装备属性与出装建议", "/knowledge/equipment"], ["BP 样本", `${currentKplBpMatches.length} 局`, ""]].map(([title, desc, href]) => (
+        {[["英雄目录", `${kplHeroCatalog.length} 个英雄`, "/knowledge/heroes"], ["装备资料", "装备属性与出装建议", "/knowledge/equipment"], ["挑战者杯 BP 库", `${challengerCupSummary.summary.game_count} 局官方小局 / ${challengerCupSummary.summary.bp_action_count} 条 BP 动作`, "/api/kpl/challenger-cup?view=matches"]].map(([title, desc, href]) => (
           <a className="rounded-[12px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-[#5EF2C2]/40" href={href || undefined} key={title}>
             <p className="font-semibold">{title}</p>
             <p className="mt-2 text-xs text-[#8EA0B8]">{desc}</p>
@@ -1393,7 +1384,7 @@ function DatabasePanel() {
     <div className="grid gap-4 xl:grid-cols-[340px_1fr_360px]">
       <section className="rounded-[20px] border border-white/10 bg-[rgba(18,27,40,0.86)] p-4">
         <div className="flex items-center gap-2"><Database className="h-4 w-4 text-[#5EF2C2]" /><h2 className="font-semibold">2026 BP 数据库</h2></div>
-        <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">当前保留 20 局阵容级 BP 和选手-英雄映射，后续继续接入 Bilibili 视频 OCR 校准逐手顺序。</p>
+        <p className="mt-2 text-xs leading-5 text-[#8EA0B8]">已接入 2026 挑战者杯官方数据：{challengerCupSummary.summary.match_count} 场比赛、{challengerCupSummary.summary.game_count} 个小局、{challengerCupSummary.summary.bp_action_count} 条 BP 动作。下方保留人工样本用于当前交互 Demo，完整官方库见知识库 API。</p>
         <div className="mt-4 max-h-[650px] space-y-2 overflow-y-auto pr-1">
           {currentKplBpMatches.map((match) => (
             <button className={(selected.id === match.id ? "border-[#5EF2C2]/60 bg-[#5EF2C2]/12" : "border-white/10 bg-white/[0.035] hover:border-white/25") + " w-full rounded-[12px] border p-3 text-left transition"} key={match.id} onClick={() => setSelectedId(match.id)} type="button">
